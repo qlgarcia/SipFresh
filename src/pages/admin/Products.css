@@ -1,0 +1,12 @@
+.product-item {
+  margin-bottom: 8px;
+}
+
+.product-item ion-label {
+  margin: 8px 0;
+}
+
+.product-item ion-button {
+  margin-left: 8px;
+}
+

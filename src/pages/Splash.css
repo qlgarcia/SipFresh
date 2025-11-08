@@ -1,0 +1,67 @@
+.splash-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(180deg, #ffe259, #ffa751);
+  color: white;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+.sip {
+  color: black; 
+}
+
+.fresh {
+  color: #FF5722; 
+}
+
+
+.bottle-logo {
+  width: 100px;
+  height: 200px;
+  border: 6px solid white;
+  border-radius: 30px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.liquid {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  animation: wave 2s infinite ease-in-out;
+}
+
+@keyframes wave {
+  0% { height: 50%; }
+  50% { height: 60%; }
+  100% { height: 50%; }
+}
+
+
+.brand-name {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0;
+}
+.tagline {
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+
+.fruit {
+  font-size: 48px;
+  position: absolute;
+  bottom: 20px;
+  animation: bounce 2s infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}

@@ -1,0 +1,133 @@
+/* MENU TOOLBAR */
+.menu-toolbar {
+  --background: #ffffff;
+  --color: #007bff;
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.1);
+}
+
+.menu-title {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.4rem;
+  padding: 8px 0;
+}
+
+.menu-logo {
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
+}
+
+.sip {
+  color: #007bff;
+}
+
+.fresh {
+  color: #00bcd4;
+}
+
+/* MENU CONTENT */
+.menu-content {
+  --background: #f8fbff;
+}
+
+/* MENU LIST */
+.menu-list {
+  margin-top: 10px;
+  padding: 0 8px;
+}
+
+.menu-item {
+  --background: transparent;
+  --color: #007bff;
+  border-radius: 12px;
+  margin: 6px 8px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.menu-item ion-icon {
+  color: #007bff;
+  font-size: 1.2rem;
+}
+
+.menu-item:hover {
+  background: rgba(0, 123, 255, 0.08);
+}
+
+.menu-item-selected {
+  --background: linear-gradient(135deg, #007bff, #00bcd4);
+  --color: #ffffff;
+  box-shadow: 0 3px 6px rgba(0, 123, 255, 0.2);
+}
+
+.menu-item-selected ion-icon {
+  color: white;
+}
+
+/* SECTIONS */
+.menu-separator {
+  height: 1px;
+  background: rgba(0, 123, 255, 0.1);
+  margin: 16px;
+}
+
+.menu-section {
+  padding: 12px 20px;
+  color: #444;
+  font-size: 0.9rem;
+}
+
+.menu-section h4 {
+  color: #007bff;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.section-icon {
+  color: #00bcd4;
+  margin-right: 6px;
+  font-size: 1.1rem;
+  vertical-align: middle;
+}
+
+
+.menu-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #777;
+  padding: 16px;
+  margin-top: 10px;
+  border-top: 1px solid rgba(0, 123, 255, 0.1);
+}
+
+.user-section {
+  text-align: center;
+  padding: 20px 10px;
+  border-bottom: 1px solid #eee;
+  background: #fdfdfd;
+}
+
+.profile-picture {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-picture:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.welcome-text {
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+

@@ -1,0 +1,16 @@
+.order-item {
+  margin-bottom: 8px;
+}
+
+.order-item ion-label {
+  margin: 8px 0;
+}
+
+.order-item ion-button {
+  margin-left: 8px;
+}
+
+ion-segment {
+  margin: 16px;
+}
+

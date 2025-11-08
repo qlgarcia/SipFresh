@@ -1,0 +1,12 @@
+.user-item {
+  margin-bottom: 8px;
+}
+
+.user-item ion-label {
+  margin: 8px 0;
+}
+
+ion-segment {
+  margin: 16px;
+}
+

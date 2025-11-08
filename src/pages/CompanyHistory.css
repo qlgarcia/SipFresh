@@ -1,0 +1,72 @@
+.company-header {
+  text-align: center;
+  font-weight: bold;
+  background: #fff;
+  color: #2b2b2b;
+}
+
+.company-content {
+  --background: linear-gradient(180deg, #ffffff 0%, #e1f5e4 100%);
+  padding: 20px;
+}
+
+.hero-section {
+  text-align: center;
+  margin-top: 30px;
+  animation: fadeIn 1.2s ease-in-out;
+}
+
+.hero-logo {
+  width: 120px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.hero-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1b5e20;
+}
+
+.hero-subtitle {
+  color: #444;
+  font-size: 1rem;
+  margin-top: 8px;
+}
+
+.history-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin: 16px 0;
+  background: #ffffffc7;
+  backdrop-filter: blur(6px);
+}
+
+.history-card ion-card-title {
+  font-weight: 600;
+  color: #1b5e20;
+}
+
+.history-card ion-card-content {
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.history-footer {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

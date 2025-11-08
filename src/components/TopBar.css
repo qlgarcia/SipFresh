@@ -1,0 +1,26 @@
+.toolbar-modern {
+  --background: #fff;
+  --color: #222;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.brand.sip {
+  color: #ff6600;
+}
+
+.brand.fresh {
+  color: #00cc66;
+}
+
+.cart-btn {
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.6rem;
+  border-radius: 50%;
+}

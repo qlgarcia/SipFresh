@@ -1,0 +1,87 @@
+.developers-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(to bottom right, #f9fafb, #e0f7fa);
+  min-height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 100px; /* ⬆️ Slightly increased bottom padding */
+  box-sizing: border-box;
+}
+
+
+.developers-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.developers-header h2 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.developers-header p {
+  color: #607d8b;
+  font-size: 0.95rem;
+}
+
+.developer-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 40px; /* ✅ adds space below the last card */
+}
+
+.dev-card {
+  width: 260px;
+  text-align: center;
+  border-radius: 15px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+  background: #ffffffcc; /* ✅ slight transparency for aesthetic */
+  backdrop-filter: blur(8px); /* ✅ subtle glass effect */
+}
+
+.dev-card:hover {
+  transform: translateY(-6px);
+}
+
+.dev-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 15px auto 5px;
+  display: block;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+  flex-wrap: wrap; /* ✅ ensures icons won’t get cut off on small screens */
+}
+
+.social-icons ion-icon {
+  font-size: 22px;
+  color: #3b5998;
+  transition: transform 0.2s, color 0.3s;
+  cursor: pointer;
+}
+
+.social-icons ion-icon:nth-child(2) {
+  color: #db4437; /* Google */
+}
+.social-icons ion-icon:nth-child(3) {
+  color: #000000; /* TikTok */
+}
+.social-icons ion-icon:nth-child(4) {
+  color: #1e88e5; /* Mail */
+}
+
+.social-icons ion-icon:hover {
+  transform: scale(1.2);
+}

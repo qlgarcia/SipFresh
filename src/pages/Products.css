@@ -1,0 +1,88 @@
+.products-content {
+  background: #ffffff !important;
+}
+
+/* Product Cards */
+.product-card-modern {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.product-card-modern:hover {
+  transform: scale(1.02);
+}
+
+.product-image-wrapper {
+  height: 130px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.product-image {
+  width: 80%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.product-title {
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.price-text {
+  text-align: center;
+  color: #444;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.product-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.compact-btn {
+  --padding-start: 4px;
+  --padding-end: 4px;
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+  min-width: 36px;
+  height: 32px;
+  font-size: 0.8rem;
+}
+
+/* Search Bar */
+.product-searchbar {
+  padding: 8px 12px;
+}
+
+/* Section Header */
+.section-header {
+  font-weight: 600;
+  text-align: center;
+  font-size: 1.1rem;
+  margin: 10px 0;
+  color: #333;
+}
+
+/* Alert Styles */
+.alert-cancel-btn {
+  color: #999 !important;
+}
+
+.alert-confirm-btn {
+  color: #3880ff !important;
+  font-weight: 600 !important;
+}
+
+/* Subtle glass effect for the alert */
+.alert-wrapper.sc-ion-alert-md,
+.alert-wrapper.sc-ion-alert-ios {
+  border-radius: 12px !important;
+  backdrop-filter: blur(10px) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+}

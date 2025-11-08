@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && (
+        // Check if user has admin role in their document
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        // Allow first user to become admin if no users exist
+        (!exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         !exists(/databases/$(database)/documents/users/__firstUserCreated))
+      );
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own data, admins can read all users
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // Only admins can write to users
+      allow write: if isAdmin();
+      // Users can create their own profile
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Users can update their own profile (but not role)
+      allow update: if request.auth != null && 
+                     request.auth.uid == userId && 
+                     !('role' in request.resource.data.diff(resource.data).changedKeys());
+    }
+
+    // Products collection
+    match /products/{productId} {
+      // Anyone can read products
+      allow read: if true;
+      // Only admins can write products
+      allow write: if isAdmin();
+    }
+
+    // Orders collection
+    match /orders/{orderId} {
+      // Users can read their own orders
+      allow read: if request.auth != null && 
+                   (request.auth.uid == resource.data.userId || isAdmin());
+      // Users can create orders
+      allow create: if request.auth != null && 
+                     request.auth.uid == request.resource.data.userId;
+      // Only admins can update orders (to change status)
+      allow update: if isAdmin();
+      // Only admins can delete orders
+      allow delete: if isAdmin();
+    }
+
+    // Carts collection
+    match /carts/{userId} {
+      // Users can read and write their own cart
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Default: deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
