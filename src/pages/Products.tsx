@@ -21,52 +21,22 @@ import { addCircleOutline, cartOutline, informationCircleOutline } from "ionicon
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import { useCart } from "../context/CartContext";
+import { listenToProducts } from "../services/productService";
 import LoginModal from "../components/LoginModal";
 import TopBar from "../components/TopBar";
 import "./Products.css";
+import { useLocation } from "react-router-dom";
 
-interface Product {
-  id: number;
+// We'll use realtime products from Firestore
+interface RemoteProduct {
+  id?: string;
   name: string;
-  price: string;
-  image: string;
-  color: string;
+  price: number | string;
+  imageURL?: string;
+  image?: string;
+  color?: string;
+  category?: string;
 }
-
-const sampleProducts: Product[] = [
-  {
-    id: 1,
-    name: "Mango Tango",
-    price: "₱180",
-    image:
-      "https://img.freepik.com/premium-photo/mango-juice-bottle-glass_123827-19891.jpg",
-    color: "linear-gradient(135deg, #f9d423, #ff4e50)",
-  },
-  {
-    id: 2,
-    name: "Strawberry Dream",
-    price: "₱160",
-    image:
-      "https://img.freepik.com/premium-photo/fresh-strawberry-juice-bottle_123827-19802.jpg",
-    color: "linear-gradient(135deg, #ff758c, #ff7eb3)",
-  },
-  {
-    id: 3,
-    name: "Citrus Splash",
-    price: "₱170",
-    image:
-      "https://img.freepik.com/premium-photo/fresh-orange-juice-bottle_123827-20000.jpg",
-    color: "linear-gradient(135deg, #f6d365, #fda085)",
-  },
-  {
-    id: 4,
-    name: "Tropical Twist",
-    price: "₱190",
-    image:
-      "https://img.freepik.com/premium-photo/pineapple-juice-glass_123827-19902.jpg",
-    color: "linear-gradient(135deg, #fce38a, #f38181)",
-  },
-];
 
 const sizeOptions = [
   { label: "Small", addOn: 0 },
@@ -76,14 +46,17 @@ const sizeOptions = [
 
 const Products: React.FC = () => {
   const [searchText, setSearchText] = useState("");
+  const [products, setProducts] = useState<RemoteProduct[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [addedProduct, setAddedProduct] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<RemoteProduct | null>(null);
   const [selectedSize, setSelectedSize] = useState("Small");
   const { addToCart } = useCart();
+  const location = useLocation();
+  const categoryFilter = new URLSearchParams(location.search).get("category") || "";
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -92,11 +65,20 @@ const Products: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  const filteredProducts = sampleProducts.filter((product) =>
-    product.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  useEffect(() => {
+    const unsub = listenToProducts((prods) => {
+      setProducts(prods as RemoteProduct[]);
+    });
+    return () => unsub();
+  }, []);
 
-  const handleAddToCartClick = (product: Product) => {
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchText.toLowerCase());
+    const matchesCategory = categoryFilter ? (product.category || "") === categoryFilter : true;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleAddToCartClick = (product: RemoteProduct) => {
     if (!user) {
       setShowLogin(true);
       return;
@@ -109,7 +91,10 @@ const Products: React.FC = () => {
   const confirmAddToCart = () => {
     if (!selectedProduct) return;
 
-    const basePrice = parseFloat(selectedProduct.price.replace("₱", ""));
+    const basePrice =
+      typeof selectedProduct.price === "string"
+        ? parseFloat((selectedProduct.price as string).replace("₱", ""))
+        : Number(selectedProduct.price || 0);
     const sizePrice =
       basePrice +
       (selectedSize === "Medium" ? 10 : selectedSize === "Large" ? 20 : 0);
@@ -118,7 +103,7 @@ const Products: React.FC = () => {
       id: `${selectedProduct.id}-${selectedSize}`,
       name: `${selectedProduct.name} (${selectedSize})`,
       price: sizePrice,
-      image: selectedProduct.image,
+      image: selectedProduct.image || selectedProduct.imageURL || "",
       quantity: 1,
     });
 

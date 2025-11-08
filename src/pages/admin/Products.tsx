@@ -22,12 +22,14 @@ import {
   IonButtons,
   IonFab,
   IonFabButton,
+  IonImg,
 } from "@ionic/react";
 import {
   createProduct,
   updateProduct,
   deleteProduct,
   getProducts,
+  listenToProducts,
   Product,
 } from "../../services/productService";
 import { add, createOutline, trashOutline } from "ionicons/icons";
@@ -51,7 +53,16 @@ const Products: React.FC = () => {
   });
 
   useEffect(() => {
-    loadProducts();
+    // use real-time listener for admin product list
+    const unsub = listenToProducts((prods, changes) => {
+      setProducts(prods);
+      setLoading(false);
+    });
+
+    // fallback: fetch once if listener fails
+    loadProducts().catch(() => {});
+
+    return () => unsub();
   }, []);
 
   const loadProducts = async () => {
@@ -106,6 +117,7 @@ const Products: React.FC = () => {
       }
       setShowToast(true);
       handleCloseModal();
+      // listener will pick up the change; refresh as fallback
       await loadProducts();
     } catch (error) {
       console.error("Error saving product:", error);
@@ -120,6 +132,7 @@ const Products: React.FC = () => {
         await deleteProduct(id);
         setToastMessage("Product deleted successfully");
         setShowToast(true);
+        // listener will handle UI update; but call loadProducts as a fallback
         await loadProducts();
       } catch (error) {
         console.error("Error deleting product:", error);
@@ -159,6 +172,14 @@ const Products: React.FC = () => {
           <IonList>
             {products.map((product) => (
               <IonItem key={product.id}>
+                {product.imageURL && (
+                  <IonImg
+                    src={product.imageURL}
+                    alt={product.name}
+                    slot="start"
+                    style={{ width: "60px", height: "60px", objectFit: "cover", marginRight: "16px", borderRadius: "8px" }}
+                  />
+                )}
                 <IonLabel>
                   <h2>{product.name}</h2>
                   <p>

@@ -27,6 +27,14 @@ service cloud.firestore {
                      !('role' in request.resource.data.diff(resource.data).changedKeys());
     }
 
+    // Categories collection
+    match /categories/{categoryId} {
+      // Anyone can read categories
+      allow read: if true;
+      // Only admins can write categories
+      allow write: if isAdmin();
+    }
+
     // Products collection
     match /products/{productId} {
       // Anyone can read products

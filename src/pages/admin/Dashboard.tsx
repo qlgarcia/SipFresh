@@ -154,15 +154,7 @@ const Dashboard: React.FC = () => {
           </IonRow>
         </IonGrid>
 
-        <div style={{ marginTop: "20px", textAlign: "center" }}>
-          <IonButton
-            color="secondary"
-            onClick={handleSeedData}
-            disabled={seeding}
-          >
-            {seeding ? "Seeding..." : "Seed Demo Data"}
-          </IonButton>
-        </div>
+        
 
         <IonToast
           isOpen={showToast}

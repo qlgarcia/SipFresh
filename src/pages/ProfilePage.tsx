@@ -8,6 +8,7 @@ import {
   IonLabel,
   IonItem,
   IonLoading,
+  IonToast,
 } from "@ionic/react";
 import { logOutOutline, cameraOutline, saveOutline } from "ionicons/icons";
 import { auth, db, storage } from "../firebaseConfig";
@@ -17,6 +18,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useHistory } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import "./ProfilePage.css";
+import { listenToOrdersForUser, Order } from "../services/orderService";
 
 const ProfilePage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -24,6 +26,8 @@ const ProfilePage: React.FC = () => {
   const [photoURL, setPhotoURL] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [orderToast, setOrderToast] = useState({ open: false, msg: "" });
 
   // Additional fields
   const [sex, setSex] = useState("");
@@ -44,26 +48,29 @@ const ProfilePage: React.FC = () => {
             "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
         );
 
-        // Load Firestore data
-        const docRef = doc(db, "users", currentUser.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setSex(data.sex || "");
-          setAge(data.age || "");
+        try {
+          const docRef = doc(db, "users", currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data() as any;
+            setSex(data.sex || "");
+            setAge(data.age || "");
 
-          if (data.phone) {
-            if (data.phone.startsWith("+")) {
-              const codeMatch = data.phone.match(/^\+\d+/);
-              const code = codeMatch ? codeMatch[0] : "+63";
-              const number = data.phone.replace(code, "");
-              setCountryCode(code);
-              setPhone(number);
-            } else {
-              setCountryCode("+63");
-              setPhone(data.phone);
+            if (data.phone) {
+              if (data.phone.startsWith("+")) {
+                const codeMatch = (data.phone as string).match(/^\+\d+/);
+                const code = codeMatch ? codeMatch[0] : "+63";
+                const number = (data.phone as string).replace(code, "");
+                setCountryCode(code);
+                setPhone(number);
+              } else {
+                setCountryCode("+63");
+                setPhone(data.phone);
+              }
             }
           }
+        } catch (err) {
+          console.error("Error loading user profile data:", err);
         }
       } else {
         setDisplayName("");
@@ -145,6 +152,23 @@ const ProfilePage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Listen to user's orders in realtime and show status change notifications
+  useEffect(() => {
+    if (!user) return;
+    const unsub = listenToOrdersForUser(user.uid, (ordersData, changes) => {
+      setOrders(ordersData as Order[]);
+      // show toast for status changes
+      changes.forEach((c) => {
+        if (c.type === "modified") {
+          const status = (c.doc as any).status;
+          setOrderToast({ open: true, msg: `Order ${c.doc.id?.substring(0, 8)} ${status}` });
+        }
+      });
+    });
+
+    return () => unsub();
+  }, [user]);
 
   return (
     <IonPage>
@@ -276,6 +300,23 @@ const ProfilePage: React.FC = () => {
                 Log Out
               </IonButton>
             </div>
+
+            {/* Order history (real-time) */}
+            <div style={{ marginTop: 24 }}>
+              <h3>Your Orders</h3>
+              {orders.length === 0 ? (
+                <p>No orders yet.</p>
+              ) : (
+                orders.map((o) => (
+                  <div key={o.id} style={{ padding: 8, borderBottom: "1px solid #eee" }}>
+                    <strong>Order #{o.id?.substring(0, 8)}</strong>
+                    <div>Status: {o.status}</div>
+                    <div>Items: {o.items.length}</div>
+                    <div>Total: ₱{(o.totalAmount || 0).toFixed(2)}</div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         ) : (
           <p className="text-center text-muted mt-5">
@@ -283,6 +324,13 @@ const ProfilePage: React.FC = () => {
           </p>
         )}
       </IonContent>
+      <IonToast
+        isOpen={orderToast.open}
+        onDidDismiss={() => setOrderToast({ open: false, msg: "" })}
+        message={orderToast.msg}
+        duration={2500}
+        color="primary"
+      />
     </IonPage>
   );
 };

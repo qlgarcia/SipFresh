@@ -17,6 +17,7 @@ import {
 import { cartOutline } from "ionicons/icons";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../firebaseConfig";
+import { listenToProducts, Product } from "../services/productService";
 import { useCart } from "../context/CartContext"; // ✅ make sure you have CartContext
 import LoginModal from "../components/LoginModal";
 import TopBar from "../components/TopBar";
@@ -29,12 +30,34 @@ const Home: React.FC = () => {
   const [toastMessage, setToastMessage] = useState("");
   const history = useHistory();
   const { addToCart } = useCart(); // ✅ useCart hook to manage cart state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [errorToast, setErrorToast] = useState({ open: false, msg: "" });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
     return () => unsubscribe();
+  }, []);
+
+  // Real-time products
+  useEffect(() => {
+    const unsub = listenToProducts((products, changes) => {
+      setProducts(products);
+      if (changes.length > 0) {
+        const last = changes[changes.length - 1];
+        const lastProduct = last.doc as Product;
+        setToastMessage(() => {
+          if (last.type === "added") return `${lastProduct.name} added`;
+          if (last.type === "modified") return `${lastProduct.name} updated`;
+          if (last.type === "removed") return `${lastProduct.name} removed`;
+          return "Catalog updated";
+        });
+        setShowToast(true);
+      }
+    });
+
+    return () => unsub();
   }, []);
 
   const handleOrderClick = () => {
@@ -53,9 +76,10 @@ const Home: React.FC = () => {
     }
 
     addToCart({
+      id: juice.id || `${juice.name}-${juice.price}`,
       name: juice.name,
-      price: juice.price,
-      image: juice.image,
+      price: Number(juice.price) || 0,
+      image: juice.image || juice.imageURL || "",
       quantity: 1,
     });
 
@@ -114,55 +138,42 @@ const Home: React.FC = () => {
           </IonRow>
         </IonGrid>
 
-        {/* 🧃 POPULAR JUICES */}
+        {/* 🧃 POPULAR JUICES - from Firestore */}
         <div className="section-header">Popular Juices</div>
         <IonGrid>
           <IonRow>
-            {[
-              {
-                name: "Berry Mix",
-                price: 279.0,
-                image:
-                  "https://img.freepik.com/premium-photo/strawberry-juice-with-ice-glass_123827-19802.jpg",
-              },
-              {
-                name: "Citrus Blast",
-                price: 299.0,
-                image:
-                  "https://img.freepik.com/premium-photo/fresh-orange-juice-bottle_123827-20000.jpg",
-              },
-              {
-                name: "Tropical Wave",
-                price: 329.0,
-                image:
-                  "https://img.freepik.com/premium-photo/pineapple-mango-juice-bottle_123827-19902.jpg",
-              },
-            ].map((juice, index) => (
-              <IonCol size="6" key={index}>
-                <IonCard className="product-card">
-                  <img
-                    src={juice.image}
-                    alt={juice.name}
-                    className="product-image"
-                  />
-                  <IonCardHeader>
-                    <IonCardTitle>{juice.name}</IonCardTitle>
-                  </IonCardHeader>
-                  <IonCardContent>
-                    <p className="price-text">₱{juice.price.toFixed(2)}</p>
-                    <IonButton
-                      fill="solid"
-                      color="success"
-                      size="small"
-                      onClick={() => handleAddToCart(juice)}
-                    >
-                      <IonIcon icon={cartOutline} slot="start" />
-                      Add to Cart
-                    </IonButton>
-                  </IonCardContent>
-                </IonCard>
+            {products.length === 0 ? (
+              <IonCol>
+                <p style={{ textAlign: "center" }}>No products to display</p>
               </IonCol>
-            ))}
+            ) : (
+              products.slice(0, 6).map((juice) => (
+                <IonCol size="6" key={juice.id}>
+                  <IonCard className="product-card">
+                    <img
+                      src={(juice as any).imageURL || (juice as any).image || ""}
+                      alt={(juice as any).name}
+                      className="product-image"
+                    />
+                    <IonCardHeader>
+                      <IonCardTitle>{(juice as any).name}</IonCardTitle>
+                    </IonCardHeader>
+                    <IonCardContent>
+                      <p className="price-text">₱{Number((juice as any).price || 0).toFixed(2)}</p>
+                      <IonButton
+                        fill="solid"
+                        color="success"
+                        size="small"
+                        onClick={() => handleAddToCart(juice)}
+                      >
+                        <IonIcon icon={cartOutline} slot="start" />
+                        Add to Cart
+                      </IonButton>
+                    </IonCardContent>
+                  </IonCard>
+                </IonCol>
+              ))
+            )}
           </IonRow>
         </IonGrid>
       </IonContent>

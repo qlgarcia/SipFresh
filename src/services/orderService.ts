@@ -9,6 +9,9 @@ import {
   query,
   orderBy,
   where,
+  onSnapshot,
+  Unsubscribe,
+  DocumentData,
 } from "firebase/firestore";
 
 export type OrderStatus = "pending" | "accepted" | "declined" | "completed";
@@ -32,6 +35,30 @@ export interface Order {
   updatedAt?: Date;
 }
 
+// Recursively remove undefined values from objects/arrays so Firestore won't reject the document
+const cleanFirestoreData = (value: any): any => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (value instanceof Date) return value; // keep Date objects
+  if (Array.isArray(value)) {
+    // Clean each element and remove undefined entries
+    return value
+      .map((v) => cleanFirestoreData(v))
+      .filter((v) => v !== undefined);
+  }
+  if (typeof value === "object") {
+    const out: any = {};
+    Object.keys(value).forEach((k) => {
+      const cleaned = cleanFirestoreData(value[k]);
+      if (cleaned !== undefined) {
+        out[k] = cleaned;
+      }
+    });
+    return out;
+  }
+  return value;
+};
+
 /**
  * Get all orders
  */
@@ -50,6 +77,67 @@ export const getOrders = async (): Promise<Order[]> => {
     console.error("Error getting orders:", error);
     throw error;
   }
+};
+
+/**
+ * Real-time listener for all orders (admin view)
+ */
+export const listenToOrders = (
+  callback: (orders: Order[], changes: { type: string; doc: DocumentData }[]) => void
+): Unsubscribe => {
+  const ordersRef = collection(db, "orders");
+  const q = query(ordersRef, orderBy("createdAt", "desc"));
+
+  const unsub = onSnapshot(
+    q,
+    (snapshot) => {
+      const orders = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+        createdAt: d.data().createdAt?.toDate(),
+        updatedAt: d.data().updatedAt?.toDate(),
+      })) as Order[];
+      const changes = snapshot.docChanges().map((c) => ({ type: c.type, doc: { id: c.doc.id, ...c.doc.data() } }));
+      callback(orders, changes);
+    },
+    (error) => {
+      console.error("Orders realtime listener error:", error);
+      callback([], []);
+    }
+  );
+
+  return unsub;
+};
+
+/**
+ * Real-time listener for orders of a specific user (customer view)
+ */
+export const listenToOrdersForUser = (
+  userId: string,
+  callback: (orders: Order[], changes: { type: string; doc: DocumentData }[]) => void
+): Unsubscribe => {
+  const ordersRef = collection(db, "orders");
+  const q = query(ordersRef, where("userId", "==", userId), orderBy("createdAt", "desc"));
+
+  const unsub = onSnapshot(
+    q,
+    (snapshot) => {
+      const orders = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+        createdAt: d.data().createdAt?.toDate(),
+        updatedAt: d.data().updatedAt?.toDate(),
+      })) as Order[];
+      const changes = snapshot.docChanges().map((c) => ({ type: c.type, doc: { id: c.doc.id, ...c.doc.data() } }));
+      callback(orders, changes);
+    },
+    (error) => {
+      console.error("User orders realtime listener error:", error);
+      callback([], []);
+    }
+  );
+
+  return unsub;
 };
 
 /**
@@ -101,17 +189,35 @@ export const getOrder = async (id: string): Promise<Order | null> => {
  * Create a new order
  */
 export const createOrder = async (order: Omit<Order, "id">): Promise<string> => {
+  const ordersRef = collection(db, "orders");
+  // Build payload and deep-clean undefined values (including inside arrays/objects)
+  const payload: any = {
+    ...order,
+    status: order.status || "pending",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const cleanedPayload = cleanFirestoreData(payload);
+
+  // Debug logs to help trace any remaining unsupported values reaching Firestore
+  // (Remove or reduce log level once verified)
   try {
-    const ordersRef = collection(db, "orders");
-    const docRef = await addDoc(ordersRef, {
-      ...order,
-      status: order.status || "pending",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    console.debug("createOrder - raw payload:", payload);
+    console.debug("createOrder - cleaned payload:", cleanedPayload);
+  } catch (e) {
+    // ignore logging errors
+  }
+
+  try {
+    const docRef = await addDoc(ordersRef, cleanedPayload);
     return docRef.id;
   } catch (error) {
     console.error("Error creating order:", error);
+    // Also log the payload that caused the error for debugging
+    try {
+      console.error("createOrder - payload on error:", cleanedPayload);
+    } catch (e) {}
     throw error;
   }
 };

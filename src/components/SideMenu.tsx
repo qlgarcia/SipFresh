@@ -13,6 +13,7 @@ import {
   IonButton,
   IonFooter,
 } from "@ionic/react";
+import { IonToast } from "@ionic/react";
 import {
   homeOutline,
   personCircleOutline,
@@ -27,9 +28,10 @@ import {
   shieldOutline,
 } from "ionicons/icons";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { auth } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
 import { useHistory, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { listenToCategories, Category } from "../services/categoryService";
 import LoginModal from "./LoginModal";
 import "./SideMenu.css";
 
@@ -40,17 +42,47 @@ interface SideMenuProps {
 
 const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
   const [user, setUser] = useState<User | null>(null);
+  // track whether auth has finished its first initialization callback
+  const [authReady, setAuthReady] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const history = useHistory();
   const location = useLocation();
   const { isAdmin } = useAuth();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [catErrorToast, setCatErrorToast] = useState({ open: false, msg: "" });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      // mark that auth has finished its initial check (even if user is null)
+      setAuthReady(true);
     });
     return () => unsubscribe();
   }, []);
+
+  // Listen to categories collection for realtime menu updates
+  useEffect(() => {
+    // Don't start the categories listener until auth has finished initializing.
+    // This avoids attempting reads before the client is fully set up which
+    // can trigger spurious permission-denied errors in some environments.
+    if (!authReady) return;
+
+    const unsub = listenToCategories((categories, changes) => {
+      setCategories(categories);
+      if (changes.length > 0) {
+        // Only show toast for changes in admin view to avoid noise for customers
+        if (isAdmin) {
+          const last = changes[changes.length - 1];
+          const lastCategory = last.doc as { name: string };
+          setCatErrorToast({
+            open: true,
+            msg: `Category ${lastCategory.name} ${last.type === 'added' ? 'added' : last.type === 'modified' ? 'updated' : 'removed'}`
+          });
+        }
+      }
+    });
+    return () => unsub();
+  }, [isAdmin, authReady]);
 
   const handleNavigate = (path: string, id: string) => {
     onSelect(id);
@@ -101,6 +133,10 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
               alt="User"
               className="profile-picture mb-2"
               onClick={() => handleNavigate("/profile", "profile")}
+              onError={(e) => {
+                // If external avatar is blocked (OpaqueResponseBlocking / NS_BINDING_ABORTED), fallback to default
+                (e.currentTarget as HTMLImageElement).src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+              }}
             />
 
             <p className="welcome-text">
@@ -115,6 +151,9 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
               src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
               alt="Guest Avatar"
               className="profile-picture mb-2"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+              }}
             />
             <p className="welcome-text">⚠️ You must log in first</p>
             <IonButton
@@ -147,6 +186,30 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
                 <IonLabel>Home</IonLabel>
               </IonItem>
             </IonMenuToggle>
+
+            {/* DYNAMIC CATEGORIES (from Firestore) */}
+            {categories.map((cat) => (
+              <IonMenuToggle autoHide={true} key={cat.id}>
+                <IonItem
+                  button
+                  lines="none"
+                  detail={false}
+                  onClick={() => handleNavigate(`/products?category=${encodeURIComponent(cat.name)}`, cat.name)}
+                  className={`menu-item ${location.pathname === "/products" ? "menu-item-selected" : ""}`}
+                >
+                  <IonIcon slot="start" icon={pricetagOutline} />
+                  <IonLabel>{cat.name}</IonLabel>
+                </IonItem>
+              </IonMenuToggle>
+            ))}
+
+            <IonToast
+              isOpen={catErrorToast.open}
+              onDidDismiss={() => setCatErrorToast({ open: false, msg: "" })}
+              message={catErrorToast.msg}
+              duration={3000}
+              color="warning"
+            />
 
             <IonMenuToggle autoHide={true}>
               <IonItem

@@ -14,3 +14,25 @@ ion-segment {
   margin: 16px;
 }
 
+.order-item details {
+  margin-top: 8px;
+}
+
+.order-item details summary {
+  cursor: pointer;
+  color: var(--ion-color-primary);
+  font-weight: 500;
+  user-select: none;
+}
+
+.order-item details ul {
+  margin-top: 8px;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.order-item details li {
+  margin: 4px 0;
+  color: var(--ion-color-dark);
+}
+

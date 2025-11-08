@@ -17,7 +17,7 @@ import {
   IonSegmentButton,
   IonToast,
 } from "@ionic/react";
-import { updateOrderStatus, getOrders, Order, OrderStatus } from "../../services/orderService";
+import { updateOrderStatus, getOrders, listenToOrders, Order, OrderStatus } from "../../services/orderService";
 import "./Orders.css";
 
 const Orders: React.FC = () => {
@@ -29,7 +29,19 @@ const Orders: React.FC = () => {
   const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
-    loadOrders();
+    // set up realtime listener for orders
+    const unsub = listenToOrders((ordersData, changes) => {
+      if (Array.isArray(ordersData)) {
+        setOrders(ordersData as Order[]);
+        setFilteredOrders(ordersData as Order[]);
+        setLoading(false);
+      }
+    });
+
+    // fallback to one-time load
+    loadOrders().catch(() => {});
+
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -57,6 +69,7 @@ const Orders: React.FC = () => {
       await updateOrderStatus(orderId, status);
       setToastMessage(`Order ${status === "accepted" ? "accepted" : "declined"} successfully`);
       setShowToast(true);
+      // realtime listener will update UI; fallback fetch
       await loadOrders();
     } catch (error) {
       console.error("Error updating order status:", error);
@@ -134,16 +147,33 @@ const Orders: React.FC = () => {
                   <p>
                     <strong>User:</strong> {order.userName || order.userEmail || order.userId}
                   </p>
-                  <p>
-                    <strong>Items:</strong> {order.items.length} item(s)
-                  </p>
+                  <div>
+                    <p>
+                      <strong>Items:</strong> {order.items.length} item(s)
+                    </p>
+                    <details style={{ marginTop: "8px" }}>
+                      <summary style={{ cursor: "pointer", color: "var(--ion-color-primary)" }}>
+                        View Items
+                      </summary>
+                      <ul style={{ marginTop: "8px", paddingLeft: "20px" }}>
+                        {order.items.map((item, idx) => (
+                          <li key={idx}>
+                            {item.productName} - Qty: {item.quantity} × ₱{item.price.toFixed(2)} = ₱
+                            {(item.quantity * item.price).toFixed(2)}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  </div>
                   <p>
                     <strong>Total:</strong> ₱{order.totalAmount.toFixed(2)}
                   </p>
                   <p>
                     <strong>Date:</strong>{" "}
                     {order.createdAt
-                      ? new Date(order.createdAt).toLocaleDateString()
+                      ? new Date(order.createdAt).toLocaleDateString() +
+                        " " +
+                        new Date(order.createdAt).toLocaleTimeString()
                       : "N/A"}
                   </p>
                   <IonBadge color={getStatusColor(order.status)}>
@@ -151,22 +181,22 @@ const Orders: React.FC = () => {
                   </IonBadge>
                 </IonLabel>
                 {order.status === "pending" && (
-                  <IonButton
-                    slot="end"
-                    color="success"
-                    onClick={() => handleUpdateStatus(order.id!, "accepted")}
-                  >
-                    Accept
-                  </IonButton>
-                )}
-                {order.status === "pending" && (
-                  <IonButton
-                    slot="end"
-                    color="danger"
-                    onClick={() => handleUpdateStatus(order.id!, "declined")}
-                  >
-                    Decline
-                  </IonButton>
+                  <>
+                    <IonButton
+                      slot="end"
+                      color="success"
+                      onClick={() => handleUpdateStatus(order.id!, "accepted")}
+                    >
+                      Accept
+                    </IonButton>
+                    <IonButton
+                      slot="end"
+                      color="danger"
+                      onClick={() => handleUpdateStatus(order.id!, "declined")}
+                    >
+                      Decline
+                    </IonButton>
+                  </>
                 )}
               </IonItem>
             ))}
