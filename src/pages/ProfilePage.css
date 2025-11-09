@@ -1,0 +1,184 @@
+/* === Profile Page Styles (Ionic + Modern Bootstrap-Inspired) === */
+
+.profile-content {
+  background: linear-gradient(180deg, #f1f5ff 0%, #ffffff 100%);
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 30px 20px;
+}
+
+.profile-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.6s ease;
+  transition: all 0.3s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-3px);
+}
+
+h3,
+ion-title {
+  font-weight: 700;
+  color: #007bff;
+  letter-spacing: 0.5px;
+}
+
+/* === Profile Image === */
+.profile-image-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.profile-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #007bff;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.profile-image:hover {
+  transform: scale(1.05);
+  border-color: #0056b3;
+}
+
+/* === Camera Icon Overlay === */
+.camera-icon {
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  padding: 8px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.camera-icon:hover {
+  background: #0056b3;
+}
+
+/* === Input Fields === */
+ion-item {
+  --background: transparent;
+  --highlight-color-focused: #007bff;
+  --color: #333;
+  margin-bottom: 16px;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  --padding-start: 12px;
+  --inner-padding-end: 12px;
+}
+
+ion-label {
+  color: #555;
+  font-weight: 600;
+}
+
+ion-input {
+  --padding-start: 5px;
+}
+
+/* === Custom Select (Sex + Country Code) === */
+.ion-input,
+select {
+  font-size: 16px;
+  background: #f9f9f9;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 10px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+select:hover,
+select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.25);
+}
+
+/* === Phone Input Layout === */
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.phone-input-wrapper select {
+  width: 30%;
+  min-width: 90px;
+}
+
+.phone-input-wrapper ion-input {
+  flex: 1;
+  --padding-start: 10px;
+}
+
+/* === Buttons === */
+ion-button {
+  margin: 5px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+ion-button[color="success"] {
+  --background: #007bff;
+  --background-hover: #0056b3;
+}
+
+ion-button[color="danger"] {
+  --background: #dc3545;
+  --background-hover: #b02a37;
+}
+
+/* === Fade-in Animation === */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Mobile Responsive === */
+@media (max-width: 576px) {
+  .profile-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .profile-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  ion-button {
+    font-size: 14px;
+  }
+
+  .phone-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .phone-input-wrapper select {
+    width: 100%;
+  }
+}

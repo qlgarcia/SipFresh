@@ -1,0 +1,23 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": {
+    "public": "dist",
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Permissions-Policy",
+            "value": "geolocation=(self)"
+          }
+        ]
+      }
+    ]
+  }
+}
+

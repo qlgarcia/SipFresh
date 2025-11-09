@@ -1,0 +1,149 @@
+/* GENERAL */
+.home-content {
+  --background: #f8fbff;
+  padding-bottom: 20px;
+}
+
+.toolbar-modern {
+  --background: #ffffff;
+  --color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+  border-bottom: 1px solid #e8f0ff;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.sip {
+  color: #007bff;
+}
+
+.fresh {
+  color: #00bcd4;
+}
+
+/* CART BUTTON */
+.cart-btn ion-icon {
+  font-size: 1.4rem;
+  color: #007bff;
+}
+
+/* HERO SECTION */
+.hero-section {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 16px;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+}
+
+.hero-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.hero-text {
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  color: white;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.hero-text h2 {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.hero-text p {
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+/* SECTION HEADERS */
+.section-header {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin: 20px 16px 8px 16px;
+  color: #007bff;
+}
+
+/* FRUIT CHIPS */
+.fruit-row {
+  text-align: center;
+}
+
+.fruit-chip {
+  background: white;
+  border-radius: 20px;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.1);
+}
+
+/* PRODUCT CARDS */
+.product-card {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 123, 255, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+}
+
+.product-image {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.product-card ion-card-title {
+  color: #007bff;
+  font-size: 1rem;
+}
+
+.product-card p {
+  color: #444;
+  margin: 6px 0;
+}
+
+/* FRUIT SECTION */
+.fruit-grid {
+  padding: 0 8px;
+}
+
+.fruit-card-modern {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 16px;
+  height: 110px;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  margin: 6px 0;
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.fruit-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0, 123, 255, 0.2);
+}
+
+.fruit-emoji {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+
+.fruit-name {
+  font-size: 0.9rem;
+  letter-spacing: 0.3px;
+}

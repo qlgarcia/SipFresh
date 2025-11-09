@@ -1,0 +1,145 @@
+
+ion-modal::part(backdrop) {
+  background: rgba(0, 0, 0, 0) !important;
+}
+
+ion-modal::part(content) {
+  background: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  border-radius: 16px !important;
+}
+ion-item::part(native) {
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+
+
+.login-modal {
+  --background: transparent !important;
+  --ion-background-color: transparent !important;
+  --border-radius: 16px;
+  --width: 80%;
+  max-width: 320px;
+  margin: auto;
+  color: #222;
+  height: 75vh;
+}
+
+.login-toolbar {
+  --background: transparent !important;
+  color: #222 !important;
+  box-shadow: none !important;
+  border-bottom: none !important;
+  text-align: center;
+  height: 44px;
+}
+
+.login-title {
+  font-weight: 600;
+  font-size: 17px;
+  margin: auto;
+}
+
+
+.login-content {
+  background: transparent !important;
+  color: #222 !important;
+  text-align: center;
+  padding: 16px 20px 24px;
+}
+
+
+.login-item {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  transition: all 0.2s ease;
+}
+
+.login-item:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: #bbb;
+}
+
+ion-input {
+  font-size: 14px;
+}
+
+
+.login-btn {
+  border-radius: 10px;
+  height: 30px;
+  margin-left: 35px;
+  width: 30vh;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: none;
+  margin-top: 6px;
+  box-shadow: none !important;
+}
+
+.main-btn {
+  --background: #81b6fc !important;
+  --color: white !important;
+}
+
+.google-btn {
+  --background: rgba(255, 255, 255, 0.8) !important;
+  --color: #5f6368 !important;
+  --border-color: #dadce0 !important;
+  --border-style: solid !important;
+  --border-width: 1px !important;
+}
+
+.google-btn ion-icon {
+  color: #4285f4 !important;
+}
+
+.facebook-btn {
+  --background: #1877f2 !important;
+  --color: #fff !important;
+}
+
+.facebook-btn ion-icon {
+  color: #fff !important;
+}
+
+
+.divider {
+  font-size: 12px;
+  color: #999;
+  margin: 14px 0 6px;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 38%;
+  height: 1px;
+  background: #ddd;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+
+@media (max-width: 480px) {
+  .login-modal {
+    --width: 88%;
+  }
+}
