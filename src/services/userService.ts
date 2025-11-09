@@ -9,6 +9,17 @@ import {
   orderBy,
 } from "firebase/firestore";
 
+const parseTimestamp = (val: any): Date | undefined => {
+  if (!val) return undefined;
+  try {
+    if (typeof val.toDate === "function") return val.toDate();
+  } catch (e) {}
+  if (val instanceof Date) return val;
+  if (typeof val === "object" && typeof val.seconds === "number") return new Date(val.seconds * 1000);
+  if (typeof val === "number") return new Date(val);
+  return undefined;
+};
+
 export interface UserData {
   id?: string;
   uid: string;
@@ -32,7 +43,7 @@ export const getUsers = async (): Promise<UserData[]> => {
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate(),
+      createdAt: parseTimestamp(doc.data().createdAt),
     })) as UserData[];
   } catch (error) {
     console.error("Error getting users:", error);
@@ -50,7 +61,7 @@ export const getUser = async (uid: string): Promise<UserData | null> => {
       return {
         id: userDoc.id,
         ...userDoc.data(),
-        createdAt: userDoc.data().createdAt?.toDate(),
+        createdAt: parseTimestamp(userDoc.data().createdAt),
       } as UserData;
     }
     return null;

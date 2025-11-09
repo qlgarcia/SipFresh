@@ -11,6 +11,8 @@ import { IonReactRouter } from "@ionic/react-router";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import CartPage from "./pages/Cart";
+import Checkout from "./pages/checkout/Checkout";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Splash from "./pages/Splash";
 import SideMenu from "./components/SideMenu";
 import About from "./pages/About";
@@ -61,6 +63,8 @@ const App: React.FC = () => {
                 <Route exact path="/home" component={Home} />
                 <Route exact path="/products" component={Products} />
                 <Route exact path="/cart" component={CartPage} />
+                <Route exact path="/checkout" component={Checkout} />
+                <Route exact path="/order-success" component={CheckoutSuccess} />
                 <Route path="/about" component={About} exact />
                 <Route path="/profile" component={ProfilePage} exact />
                 <Route exact path="/company-history" component={CompanyHistory} />

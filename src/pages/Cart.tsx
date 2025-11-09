@@ -23,8 +23,7 @@ import { trashOutline, addOutline, removeOutline } from "ionicons/icons";
 import { useCart } from "../context/CartContext";
 import { auth } from "../firebaseConfig";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { createOrder } from "../services/orderService";
-import { getUser } from "../services/userService";
+// Checkout will be handled in a dedicated Checkout page using PayPal
 import { useAuth } from "../hooks/useAuth";
 import "./Cart.css";
 import TopBar from "../components/TopBar";
@@ -65,51 +64,8 @@ const Cart: React.FC = () => {
       return;
     }
 
-    setIsProcessing(true);
-
-    try {
-      // Get user data for order
-      const userData = await getUser(user.uid);
-      
-      // Convert cart items to order items
-      const orderItems = cart.map((item) => ({
-        productId: item.id,
-        productName: item.name,
-        quantity: item.quantity,
-        price: item.price,
-      }));
-
-      // Create order in Firestore
-      await createOrder({
-        userId: user.uid,
-        userEmail: user.email || undefined,
-        userName: userData?.displayName || user.displayName || undefined,
-        items: orderItems,
-        totalAmount: total,
-        status: "pending",
-      });
-
-      // Clear cart
-      clearCart();
-
-      // Show success message and navigate
-      setToastMessage("Order placed successfully!");
-      setShowToast(true);
-
-      // Navigate to admin orders page if admin, otherwise go to home
-      setTimeout(() => {
-        if (isAdmin) {
-          history.push("/admin/orders");
-        } else {
-          history.push("/home");
-        }
-      }, 1500);
-    } catch (error) {
-      console.error("Error creating order:", error);
-      setToastMessage("Error placing order. Please try again.");
-      setShowToast(true);
-      setIsProcessing(false);
-    }
+    // Navigate to checkout page where PayPal flow will run and the order will be created
+    history.push("/checkout");
   };
 
   return (

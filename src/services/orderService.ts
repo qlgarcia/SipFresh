@@ -12,13 +12,16 @@ import {
   onSnapshot,
   Unsubscribe,
   DocumentData,
+  serverTimestamp,
 } from "firebase/firestore";
 
 export type OrderStatus = "pending" | "accepted" | "declined" | "completed";
 
 export interface OrderItem {
   productId: string;
-  productName: string;
+  productName?: string;
+  // keep 'name' to match requested schema
+  name?: string;
   quantity: number;
   price: number;
 }
@@ -29,7 +32,9 @@ export interface Order {
   userEmail?: string;
   userName?: string;
   items: OrderItem[];
+  // store both 'totalAmount' (existing code) and 'amount' (requested schema)
   totalAmount: number;
+  amount?: number;
   status: OrderStatus;
   createdAt?: Date;
   updatedAt?: Date;
@@ -59,6 +64,24 @@ const cleanFirestoreData = (value: any): any => {
   return value;
 };
 
+// Convert Firestore timestamp-like values to JS Date safely
+const parseTimestamp = (val: any): Date | undefined => {
+  if (!val) return undefined;
+  try {
+    if (typeof val.toDate === "function") return val.toDate();
+  } catch (e) {
+    // ignore
+  }
+  if (val instanceof Date) return val;
+  // Firestore Timestamp-like plain object { seconds, nanoseconds }
+  if (typeof val === "object" && typeof val.seconds === "number") {
+    return new Date(val.seconds * 1000);
+  }
+  // numeric milliseconds
+  if (typeof val === "number") return new Date(val);
+  return undefined;
+};
+
 /**
  * Get all orders
  */
@@ -70,8 +93,8 @@ export const getOrders = async (): Promise<Order[]> => {
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate(),
+      createdAt: parseTimestamp(doc.data().createdAt),
+      updatedAt: parseTimestamp(doc.data().updatedAt),
     })) as Order[];
   } catch (error) {
     console.error("Error getting orders:", error);
@@ -94,8 +117,8 @@ export const listenToOrders = (
       const orders = snapshot.docs.map((d) => ({
         id: d.id,
         ...d.data(),
-        createdAt: d.data().createdAt?.toDate(),
-        updatedAt: d.data().updatedAt?.toDate(),
+        createdAt: parseTimestamp(d.data().createdAt),
+        updatedAt: parseTimestamp(d.data().updatedAt),
       })) as Order[];
       const changes = snapshot.docChanges().map((c) => ({ type: c.type, doc: { id: c.doc.id, ...c.doc.data() } }));
       callback(orders, changes);
@@ -125,8 +148,8 @@ export const listenToOrdersForUser = (
       const orders = snapshot.docs.map((d) => ({
         id: d.id,
         ...d.data(),
-        createdAt: d.data().createdAt?.toDate(),
-        updatedAt: d.data().updatedAt?.toDate(),
+        createdAt: parseTimestamp(d.data().createdAt),
+        updatedAt: parseTimestamp(d.data().updatedAt),
       })) as Order[];
       const changes = snapshot.docChanges().map((c) => ({ type: c.type, doc: { id: c.doc.id, ...c.doc.data() } }));
       callback(orders, changes);
@@ -155,8 +178,8 @@ export const getOrdersByStatus = async (status: OrderStatus): Promise<Order[]> =
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate(),
+      createdAt: parseTimestamp(doc.data().createdAt),
+      updatedAt: parseTimestamp(doc.data().updatedAt),
     })) as Order[];
   } catch (error) {
     console.error("Error getting orders by status:", error);
@@ -174,8 +197,8 @@ export const getOrder = async (id: string): Promise<Order | null> => {
       return {
         id: orderDoc.id,
         ...orderDoc.data(),
-        createdAt: orderDoc.data().createdAt?.toDate(),
-        updatedAt: orderDoc.data().updatedAt?.toDate(),
+        createdAt: parseTimestamp(orderDoc.data().createdAt),
+        updatedAt: parseTimestamp(orderDoc.data().updatedAt),
       } as Order;
     }
     return null;
@@ -191,11 +214,24 @@ export const getOrder = async (id: string): Promise<Order | null> => {
 export const createOrder = async (order: Omit<Order, "id">): Promise<string> => {
   const ordersRef = collection(db, "orders");
   // Build payload and deep-clean undefined values (including inside arrays/objects)
+  // Ensure we write fields that match the requested schema and keep backwards compatibility.
   const payload: any = {
     ...order,
     status: order.status || "pending",
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    // write server timestamps for created/updated times
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    // mirror totalAmount into amount (requested schema uses `amount`)
+    amount: (order as any).totalAmount ?? (order as any).amount,
+    // Normalize items to include `name` field expected by schema
+    items: (order.items || []).map((it: any) => ({
+      productId: it.productId,
+      name: it.name ?? it.productName ?? it.product_name ?? "",
+      price: it.price,
+      quantity: it.quantity,
+      // keep original productName for backwards compatibility
+      productName: it.productName,
+    })),
   };
 
   const cleanedPayload = cleanFirestoreData(payload);

@@ -136,13 +136,20 @@ const Products: React.FC = () => {
                 <IonCard className="product-card-modern">
                   <div
                     className="product-image-wrapper"
-                    style={{ background: product.color }}
+                    style={{ background: (product as any).color || undefined }}
                   >
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="product-image"
-                    />
+                    {/* Support both `image` and `imageURL` fields coming from Firestore. */}
+                    {(() => {
+                      const imgSrc = (product as any).image || (product as any).imageURL || 
+                        "https://via.placeholder.com/320x200?text=No+Image";
+                      return (
+                        <img
+                          src={imgSrc}
+                          alt={product.name}
+                          className="product-image"
+                        />
+                      );
+                    })()}
                   </div>
                   <IonCardHeader>
                     <IonCardTitle className="product-title">
@@ -169,7 +176,7 @@ const Products: React.FC = () => {
                       >
                         <IonIcon
                           slot="icon-only"
-                          icon={cartOutline}
+                          icon={informationCircleOutline}
                         />
                       </IonButton>
                     </div>

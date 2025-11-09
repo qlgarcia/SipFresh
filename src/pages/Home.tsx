@@ -127,8 +127,16 @@ const Home: React.FC = () => {
             ].map((fruit, index) => (
               <IonCol size="6" size-md="4" key={index}>
                 <div
+                  role="button"
+                  tabIndex={0}
                   className="fruit-card-modern"
-                  style={{ background: fruit.color }}
+                  style={{ background: fruit.color, cursor: 'pointer' }}
+                  onClick={() => history.push(`/products?category=${encodeURIComponent(fruit.name)}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      history.push(`/products?category=${encodeURIComponent(fruit.name)}`);
+                    }
+                  }}
                 >
                   <div className="fruit-emoji">{fruit.emoji}</div>
                   <div className="fruit-name">{fruit.name}</div>

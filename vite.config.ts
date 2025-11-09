@@ -10,6 +10,9 @@ export default defineConfig({
     react(),
     legacy()
   ],
+  // Default dev server settings (no forced HTTPS). Use your system tooling to enable
+  // HTTPS if you need a trusted local certificate (e.g. mkcert). By leaving out the
+  // `server.https` override we keep the original, simpler behavior.
   test: {
     globals: true,
     environment: 'jsdom',
