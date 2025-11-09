@@ -11,6 +11,7 @@ import {
   IonCardContent,
 } from "@ionic/react";
 import "./CompanyHistory.css";
+import logo from "../assets/SipFreshClear.png";
 import TopBar from "../components/TopBar";
 
 const CompanyHistory: React.FC = () => {
@@ -20,11 +21,7 @@ const CompanyHistory: React.FC = () => {
 
       <IonContent fullscreen className="company-content">
         <section className="hero-section">
-          <img
-            src="/src/assets/SipFreshClear.png"
-            alt="SipFresh Logo"
-            className="hero-logo"
-          />
+          <img src={logo} alt="SipFresh Logo" className="hero-logo" />
           <h1 className="hero-title">SipFresh Through the Years</h1>
           <p className="hero-subtitle">
             From small beginnings to refreshing the world—one bottle at a time.

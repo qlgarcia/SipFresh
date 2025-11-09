@@ -9,6 +9,7 @@ import {
   IonMenuButton,
 } from "@ionic/react";
 import "./About.css";
+import logo from "../assets/SipFreshClear.png";
 import TopBar from "../components/TopBar";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -20,11 +21,7 @@ const About: React.FC = () => {
       <IonContent fullscreen className="about-page">
         <div className="container py-5">
           <div className="text-center mb-5">
-            <img
-              src="/src/assets/SipFreshClear.png"
-              alt="App Logo"
-              className="about-logo mb-3"
-            />
+            <img src={logo} alt="App Logo" className="about-logo mb-3" />
             <p className="lead text-muted">
               SipFresh is a mobile application designed to make refreshing, 
               healthy bottled juices more accessible and convenient for everyone. 

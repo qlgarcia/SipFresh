@@ -33,6 +33,7 @@ import { useHistory, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { listenToCategories, Category } from "../services/categoryService";
 import LoginModal from "./LoginModal";
+import logo from "../assets/SipFreshClear.png";
 import "./SideMenu.css";
 
 interface SideMenuProps {
@@ -107,11 +108,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
         <IonHeader>
           <IonToolbar className="menu-toolbar">
             <IonTitle className="menu-title">
-              <img
-                src="/src/assets/SipFreshClear.png"
-                alt="Logo"
-                className="menu-logo"
-              />
+              <img src={logo} alt="Logo" className="menu-logo" />
               <span className="sip">Sip</span>
               <span className="fresh">Fresh</span>
             </IonTitle>

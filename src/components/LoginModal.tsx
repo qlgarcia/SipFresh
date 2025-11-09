@@ -49,6 +49,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       onClose();
     } catch (error) {
       console.error("Google login error:", error);
+      // Provide a helpful, actionable message for the common 'unauthorized-domain' error.
+      const code = (error as any)?.code || (error as any)?.message || "";
+      if (typeof code === "string" && code.includes("unauthorized-domain")) {
+        alert(
+          "Google sign-in blocked: the current domain is not authorized in your Firebase project.\n\n" +
+            "Fix: Open Firebase Console → Authentication → Settings → Authorized domains and add this domain (e.g. sipfresh.vercel.app and localhost:5173)."
+        );
+      } else {
+        alert("Google login error: " + ((error as any)?.message || error));
+      }
     }
   };
 
