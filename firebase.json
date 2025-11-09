@@ -14,10 +14,17 @@
           {
             "key": "Permissions-Policy",
             "value": "geolocation=(self)"
+          },
+          {
+            "key": "Cross-Origin-Opener-Policy",
+            "value": "same-origin-allow-popups"
           }
         ]
       }
     ]
+  ,
+    "redirects": [],
+    "rewrites": []
   }
 }
 

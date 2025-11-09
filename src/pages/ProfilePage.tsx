@@ -9,6 +9,8 @@ import {
   IonItem,
   IonLoading,
   IonToast,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/react";
 import { logOutOutline, cameraOutline, saveOutline } from "ionicons/icons";
 import { auth, db, storage } from "../firebaseConfig";
@@ -262,22 +264,18 @@ const ProfilePage: React.FC = () => {
                   width: "100%",
                 }}
               >
-                <select
+                <IonSelect
                   value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  style={{
-                    width: "30%",
-                    padding: "8px",
-                    border: "1px solid var(--ion-color-medium)",
-                    borderRadius: "8px",
-                  }}
+                  onIonChange={(e) => setCountryCode(e.detail.value)}
+                  interface="popover"
+                  style={{ width: "30%" }}
                 >
-                  <option value="+63">🇵🇭 +63</option>
-                  <option value="+1">🇺🇸 +1</option>
-                  <option value="+44">🇬🇧 +44</option>
-                  <option value="+61">🇦🇺 +61</option>
-                  <option value="+91">🇮🇳 +91</option>
-                </select>
+                  <IonSelectOption value="+63">🇵🇭 +63</IonSelectOption>
+                  <IonSelectOption value="+1">🇺🇸 +1</IonSelectOption>
+                  <IonSelectOption value="+44">🇬🇧 +44</IonSelectOption>
+                  <IonSelectOption value="+61">🇦🇺 +61</IonSelectOption>
+                  <IonSelectOption value="+91">🇮🇳 +91</IonSelectOption>
+                </IonSelect>
 
                 <IonInput
                   type="tel"

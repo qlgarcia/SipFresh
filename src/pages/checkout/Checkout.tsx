@@ -27,7 +27,7 @@ declare global {
 const Checkout: React.FC = () => {
   const { cart, clearCart } = useCart();
   const history = useHistory();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -40,10 +40,15 @@ const Checkout: React.FC = () => {
   const total = subtotal + vatAmount + shippingFee;
 
   useEffect(() => {
-    // Basic guard
+    // Wait for auth to initialize before deciding (prevents a flash when auth is still loading)
+    if (loading) return;
+
+    // Basic guard: require authenticated user to proceed to payment
     if (!user) {
       setToastMessage("Please login to complete checkout");
       setShowToast(true);
+      // Redirect to home (login modal is available there) after a short delay so the toast is visible
+      setTimeout(() => history.push("/home"), 1200);
       return;
     }
 

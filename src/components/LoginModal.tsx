@@ -40,7 +40,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           role: "user",
           sex: "",
           age: "",
-          phone: "",
           createdAt: new Date(),
         },
         { merge: true }
@@ -68,16 +67,20 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
-        displayName: "",
-        role: "user",
-        sex: "",
-        age: "",
-        phone: "",
-        createdAt: new Date(),
-      });
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          uid: user.uid,
+          email: user.email,
+          displayName: "",
+          role: "user",
+          sex: "",
+          age: "",
+          // omit phone here so we don't overwrite any value on future logins
+          createdAt: new Date(),
+        },
+        { merge: true }
+      );
 
       alert("Account created successfully!");
       onClose();

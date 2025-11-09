@@ -29,11 +29,11 @@ import {
 } from "ionicons/icons";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useHistory, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { listenToCategories, Category } from "../services/categoryService";
 import LoginModal from "./LoginModal";
-import logo from "../assets/SipFreshClear.png";
 import "./SideMenu.css";
 
 interface SideMenuProps {
@@ -51,6 +51,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
   const { isAdmin } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [catErrorToast, setCatErrorToast] = useState({ open: false, msg: "" });
+  const [userPhone, setUserPhone] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -60,6 +61,29 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
     });
     return () => unsubscribe();
   }, []);
+
+  // Realtime listener for user's phone so SideMenu updates immediately after profile edits
+  useEffect(() => {
+    if (!user) {
+      setUserPhone(null);
+      return;
+    }
+
+    const docRef = doc(db, "users", user.uid);
+    const unsubscribe = onSnapshot(docRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as any;
+        setUserPhone(data?.phone || null);
+      } else {
+        setUserPhone(null);
+      }
+    }, (err) => {
+      // ignore errors for now
+      setUserPhone(null);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   // Listen to categories collection for realtime menu updates
   useEffect(() => {
@@ -108,7 +132,11 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
         <IonHeader>
           <IonToolbar className="menu-toolbar">
             <IonTitle className="menu-title">
-              <img src={logo} alt="Logo" className="menu-logo" />
+              <img
+                src="/src/assets/SipFreshClear.png"
+                alt="Logo"
+                className="menu-logo"
+              />
               <span className="sip">Sip</span>
               <span className="fresh">Fresh</span>
             </IonTitle>
@@ -137,8 +165,13 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
             />
 
             <p className="welcome-text">
-              Hello! <strong>{user.displayName || user.email}</strong> 
+              Hello! <strong>{user.displayName || user.email}</strong>
             </p>
+
+            {/* Show user's phone number: prefer Firestore `users` doc, fall back to Auth phoneNumber */}
+            {(userPhone || user?.phoneNumber) && (
+              <p className="phone-text">📱 {userPhone || user?.phoneNumber}</p>
+            )}
 
           </>
         ) : (
