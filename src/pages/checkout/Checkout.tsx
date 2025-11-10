@@ -27,6 +27,96 @@ declare global {
   }
 }
 
+// Module-level singleton loader to avoid injecting the PayPal SDK multiple times
+// (React 18 StrictMode can mount/unmount components twice in dev which causes
+// PayPal to register duplicate zoid listeners and throw errors). We keep a
+// single promise so repeated calls reuse the same initialization.
+let __paypalLoadPromise: Promise<void> | null = null;
+const ensurePayPalSdk = (): Promise<void> => {
+  if (__paypalLoadPromise) return __paypalLoadPromise;
+
+  __paypalLoadPromise = new Promise((resolve, reject) => {
+    try {
+      if ((window as any).paypal?.Buttons) {
+        resolve();
+        return;
+      }
+
+      // If a script already exists, don't remove it — just wait for paypal to be ready
+      const existing = document.getElementById("paypal-sdk") as HTMLScriptElement | null;
+
+      const clientId = (import.meta as any).env.VITE_PAYPAL_CLIENT_ID;
+      if (!clientId) {
+        console.error("PayPal client ID not found in environment variables");
+        reject(new Error("Missing PayPal client ID"));
+        return;
+      }
+
+      const attachCheck = (scriptEl: HTMLScriptElement | null) => {
+        let paypalCheckInterval: any = null;
+        let timeoutId: any = null;
+
+        const checkPayPalAvailable = () => {
+          if ((window as any).paypal?.Buttons) {
+            if (paypalCheckInterval) clearInterval(paypalCheckInterval);
+            if (timeoutId) clearTimeout(timeoutId);
+            resolve();
+            return true;
+          }
+          return false;
+        };
+
+        if (checkPayPalAvailable()) return;
+
+        if (scriptEl) {
+          // If script already loaded but paypal not ready, wait/poll
+          paypalCheckInterval = setInterval(checkPayPalAvailable, 100);
+          timeoutId = setTimeout(() => {
+            if (paypalCheckInterval) clearInterval(paypalCheckInterval);
+            reject(new Error("PayPal SDK initialization timeout"));
+          }, 10000);
+
+          scriptEl.addEventListener("error", () => {
+            if (paypalCheckInterval) clearInterval(paypalCheckInterval);
+            if (timeoutId) clearTimeout(timeoutId);
+            reject(new Error("Failed to load PayPal SDK"));
+          });
+          return;
+        }
+
+        // Create script if not present
+        const script = document.createElement("script");
+        script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=PHP&intent=capture&components=buttons`;
+        script.id = "paypal-sdk";
+        script.async = true;
+
+        script.onload = () => {
+          if (!checkPayPalAvailable()) {
+            paypalCheckInterval = setInterval(checkPayPalAvailable, 100);
+            timeoutId = setTimeout(() => {
+              if (paypalCheckInterval) clearInterval(paypalCheckInterval);
+              reject(new Error("PayPal SDK initialization timeout"));
+            }, 10000);
+          }
+        };
+
+        script.onerror = () => {
+          reject(new Error("Failed to load PayPal SDK"));
+        };
+
+        document.body.appendChild(script);
+      };
+
+      attachCheck(existing);
+    } catch (error) {
+      __paypalLoadPromise = null;
+      reject(error);
+    }
+  });
+
+  return __paypalLoadPromise;
+};
+
 const Checkout: React.FC = () => {
   const { cart, clearCart } = useCart();
   const history = useHistory();
@@ -60,77 +150,13 @@ const Checkout: React.FC = () => {
       // This helps with navigation from Cart -> Checkout
       await new Promise(resolve => setTimeout(resolve, 800));
 
-    // helper to dynamically load the PayPal SDK using Vite env var VITE_PAYPAL_CLIENT_ID
-    const ensurePayPal = (): Promise<void> => {
-      return new Promise((resolve, reject) => {
-        try {
-          // If PayPal is already loaded, resolve immediately
-          if ((window as any).paypal) {
-            resolve();
-            return;
-          }
-
-          // Clear existing PayPal scripts to avoid conflicts
-          document.querySelectorAll('script[src*="paypal.com/sdk/js"]').forEach(script => script.remove());
-
-          const clientId = (import.meta as any).env.VITE_PAYPAL_CLIENT_ID;
-          if (!clientId) {
-            console.error("PayPal client ID not found in environment variables");
-            setToastMessage("Payment system configuration error. Please contact support.");
-            setShowToast(true);
-            return reject(new Error("Missing PayPal client ID"));
-          }
-
-          const script = document.createElement("script");
-          script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=PHP&intent=capture&components=buttons`;
-          script.id = "paypal-sdk";
-          script.async = true;
-          
-          let paypalCheckInterval: any = null;
-          let timeoutId: any = null;
-
-          // Resolve when PayPal object is available
-          const checkPayPalAvailable = () => {
-            if ((window as any).paypal?.Buttons) {
-              if (paypalCheckInterval) clearInterval(paypalCheckInterval);
-              if (timeoutId) clearTimeout(timeoutId);
-              resolve();
-              return true;
-            }
-            return false;
-          };
-
-          script.onload = () => {
-            // Check immediately after load
-            if (!checkPayPalAvailable()) {
-              // If not available immediately, start polling
-              paypalCheckInterval = setInterval(checkPayPalAvailable, 100);
-              
-              // Set a timeout to avoid infinite polling
-              timeoutId = setTimeout(() => {
-                if (paypalCheckInterval) clearInterval(paypalCheckInterval);
-                reject(new Error("PayPal SDK initialization timeout"));
-                setToastMessage("Payment system failed to load. Please refresh the page.");
-                setShowToast(true);
-              }, 10000); // 10 second timeout
-            }
-          };
-
-          script.onerror = () => {
-            if (paypalCheckInterval) clearInterval(paypalCheckInterval);
-            if (timeoutId) clearTimeout(timeoutId);
-            reject(new Error("Failed to load PayPal SDK"));
-            setToastMessage("Payment system is currently unavailable. Please try again later.");
-            setShowToast(true);
-          };
-
-          document.body.appendChild(script);
-        } catch (error) {
-          console.error("Error setting up PayPal:", error);
-          reject(error);
-        }
-      });
+      // Close initializePayPal early: it only performs auth/delay checks.
+      // The SDK loader and render functions are defined at the useEffect scope
+      // below so they can be reused when initializing the PayPal buttons.
     };
+
+    // PayPal SDK loader moved to module scope (ensurePayPalSdk) to make
+    // initialization idempotent across mounts and avoid duplicate listeners.
 
     // Use app totals directly in PHP (no client-side conversion). PayPal will be loaded with currency=PHP.
     const totalPHP = Math.max(0.01, +total.toFixed(2));
@@ -229,7 +255,7 @@ const Checkout: React.FC = () => {
 
     let mounted = true;
     initializePayPal()
-      .then(() => ensurePayPal())
+      .then(() => ensurePayPalSdk())
       .then(() => {
         if (mounted) renderButtons();
       })
@@ -239,19 +265,14 @@ const Checkout: React.FC = () => {
         setShowToast(true);
       });
 
-    // cleanup: remove PayPal script and container children on unmount
+    // cleanup: only clear component-specific DOM. Do NOT remove the global
+    // PayPal script or `window.paypal` — leaving the SDK in place prevents the
+    // PayPal library from re-registering internal listeners on remount (React
+    // StrictMode double-mount can cause "request listener already exists").
     return () => {
       mounted = false;
-      // Clear PayPal container
       const container = document.getElementById("paypal-button-container");
       if (container) container.innerHTML = "";
-      
-      // Remove PayPal script
-      const script = document.getElementById("paypal-sdk");
-      if (script) script.remove();
-      
-      // Clear PayPal object
-      (window as any).paypal = undefined;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, cart]);
