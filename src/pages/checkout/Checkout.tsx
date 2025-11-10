@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import {
   IonPage,
@@ -124,6 +124,7 @@ const Checkout: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [processing, setProcessing] = useState(false);
+  const paypalContainerRef = useRef<HTMLDivElement | null>(null);
 
   // calculations (same as Cart)
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -168,8 +169,18 @@ const Checkout: React.FC = () => {
           throw new Error("PayPal SDK not properly initialized");
         }
 
-        // Clear existing buttons
-        const container = document.getElementById("paypal-button-container");
+        // Resolve container using ref first (more reliable with Ionic) and
+        // fall back to document lookup. If not available yet, retry a few
+        // times with a short delay — IonContent sometimes renders children
+        // slightly later in the DOM.
+        let container: HTMLElement | null = paypalContainerRef.current ?? document.getElementById("paypal-button-container");
+        let retries = 0;
+        while (!container && retries < 10) {
+          await new Promise((r) => setTimeout(r, 100));
+          container = paypalContainerRef.current ?? document.getElementById("paypal-button-container");
+          retries++;
+        }
+
         if (!container) {
           throw new Error("PayPal button container not found");
         }
@@ -272,7 +283,8 @@ const Checkout: React.FC = () => {
     return () => {
       mounted = false;
       const container = document.getElementById("paypal-button-container");
-      if (container) container.innerHTML = "";
+      const containerNode = paypalContainerRef.current ?? document.getElementById("paypal-button-container");
+      if (containerNode) containerNode.innerHTML = "";
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, cart]);
