@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage"; // ✅ Import Firebase Storage
 
@@ -16,7 +16,19 @@ const app = initializeApp(firebaseConfig);
 
 // ✅ Initialize services
 export const auth = getAuth(app);
+// Set persistence to LOCAL to handle WebView storage issues
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("Firebase persistence error:", error);
+});
 export const googleProvider = new GoogleAuthProvider();
+// Configure for mobile WebView usage
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+  // Force same-origin to keep auth in WebView
+  redirect_uri: window.location.origin,
+  // Disable redirect mode
+  display: 'popup'
+});
 export const db = getFirestore(app);
 export const storage = getStorage(app); // ✅ Add this line for image uploads
 

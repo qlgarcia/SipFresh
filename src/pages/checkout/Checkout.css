@@ -1,0 +1,72 @@
+.checkout-content {
+  --background: #f8fbff;
+  padding-bottom: 70px;
+}
+
+.checkout-section {
+  background: white;
+  margin: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.order-summary {
+  background: white;
+  margin: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+.total {
+  color: #333;
+  font-size: 1.1rem;
+  margin-top: 8px;
+}
+
+#paypal-button-container {
+  margin: 16px;
+  min-height: 150px;
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* PayPal button container when empty */
+#paypal-button-container:empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+#paypal-button-container:empty::after {
+  content: "Loading payment options...";
+  color: #666;
+  font-size: 14px;
+}
+
+.processing-overlay {
+  text-align: center;
+  margin-top: 16px;
+  color: #666;
+}
+
+.processing-overlay ion-spinner {
+  margin-right: 8px;
+}

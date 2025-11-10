@@ -13,10 +13,13 @@ import {
   IonText,
   IonToast,
   IonSpinner,
+  IonImg,
 } from "@ionic/react";
 import { useCart } from "../../context/CartContext";
 import { createOrder } from "../../services/orderService";
 import { useAuth } from "../../hooks/useAuth";
+import TopBar from "../../components/TopBar";
+import "./Checkout.css";
 
 declare global {
   interface Window {
@@ -40,47 +43,92 @@ const Checkout: React.FC = () => {
   const total = subtotal + vatAmount + shippingFee;
 
   useEffect(() => {
-    // Wait for auth to initialize before deciding (prevents a flash when auth is still loading)
-    if (loading) return;
+    const initializePayPal = async () => {
+      // Wait for auth to initialize before deciding (prevents a flash when auth is still loading)
+      if (loading) return;
 
-    // Basic guard: require authenticated user to proceed to payment
-    if (!user) {
-      setToastMessage("Please login to complete checkout");
-      setShowToast(true);
-      // Redirect to home (login modal is available there) after a short delay so the toast is visible
-      setTimeout(() => history.push("/home"), 1200);
-      return;
-    }
+      // Basic guard: require authenticated user to proceed to payment
+      if (!user) {
+        setToastMessage("Please login to complete checkout");
+        setShowToast(true);
+        // Redirect to home (login modal is available there) after a short delay so the toast is visible
+        setTimeout(() => history.push("/home"), 1200);
+        return;
+      }
+
+      // Small delay to ensure component is fully mounted before loading PayPal
+      // This helps with navigation from Cart -> Checkout
+      await new Promise(resolve => setTimeout(resolve, 800));
 
     // helper to dynamically load the PayPal SDK using Vite env var VITE_PAYPAL_CLIENT_ID
     const ensurePayPal = (): Promise<void> => {
       return new Promise((resolve, reject) => {
-        if ((window as any).paypal) return resolve();
+        try {
+          // If PayPal is already loaded, resolve immediately
+          if ((window as any).paypal) {
+            resolve();
+            return;
+          }
 
-        const clientId = (import.meta as any).env?.VITE_PAYPAL_CLIENT_ID;
-        // default currency to PHP (Philippine Peso)
-        const currency = (import.meta as any).env?.VITE_PAYPAL_CURRENCY || "PHP";
+          // Clear existing PayPal scripts to avoid conflicts
+          document.querySelectorAll('script[src*="paypal.com/sdk/js"]').forEach(script => script.remove());
 
-            // If client id isn't provided, fail fast and show a clear message instead of trying to load a bad URL
-            if (!clientId) {
-              console.error("PayPal client id is not set. Set VITE_PAYPAL_CLIENT_ID in your .env (use sandbox id for testing)");
-              setToastMessage("Payment provider not configured. Please set VITE_PAYPAL_CLIENT_ID.");
-              setShowToast(true);
-              return reject(new Error("Missing PayPal client id"));
+          const clientId = (import.meta as any).env.VITE_PAYPAL_CLIENT_ID;
+          if (!clientId) {
+            console.error("PayPal client ID not found in environment variables");
+            setToastMessage("Payment system configuration error. Please contact support.");
+            setShowToast(true);
+            return reject(new Error("Missing PayPal client ID"));
+          }
+
+          const script = document.createElement("script");
+          script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=PHP&intent=capture&components=buttons`;
+          script.id = "paypal-sdk";
+          script.async = true;
+          
+          let paypalCheckInterval: any = null;
+          let timeoutId: any = null;
+
+          // Resolve when PayPal object is available
+          const checkPayPalAvailable = () => {
+            if ((window as any).paypal?.Buttons) {
+              if (paypalCheckInterval) clearInterval(paypalCheckInterval);
+              if (timeoutId) clearTimeout(timeoutId);
+              resolve();
+              return true;
             }
+            return false;
+          };
 
-            const script = document.createElement("script");
-            script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currency}`;
-        script.async = true;
-        script.onload = () => {
-          // small delay to ensure paypal is attached
-          setTimeout(() => {
-            if ((window as any).paypal) resolve();
-            else reject(new Error("PayPal SDK did not initialize."));
-          }, 50);
-        };
-        script.onerror = (ev) => reject(new Error("Failed to load PayPal SDK"));
-        document.head.appendChild(script);
+          script.onload = () => {
+            // Check immediately after load
+            if (!checkPayPalAvailable()) {
+              // If not available immediately, start polling
+              paypalCheckInterval = setInterval(checkPayPalAvailable, 100);
+              
+              // Set a timeout to avoid infinite polling
+              timeoutId = setTimeout(() => {
+                if (paypalCheckInterval) clearInterval(paypalCheckInterval);
+                reject(new Error("PayPal SDK initialization timeout"));
+                setToastMessage("Payment system failed to load. Please refresh the page.");
+                setShowToast(true);
+              }, 10000); // 10 second timeout
+            }
+          };
+
+          script.onerror = () => {
+            if (paypalCheckInterval) clearInterval(paypalCheckInterval);
+            if (timeoutId) clearTimeout(timeoutId);
+            reject(new Error("Failed to load PayPal SDK"));
+            setToastMessage("Payment system is currently unavailable. Please try again later.");
+            setShowToast(true);
+          };
+
+          document.body.appendChild(script);
+        } catch (error) {
+          console.error("Error setting up PayPal:", error);
+          reject(error);
+        }
       });
     };
 
@@ -90,14 +138,42 @@ const Checkout: React.FC = () => {
     const renderButtons = async () => {
       try {
         const paypal = (window as any).paypal;
-        if (!paypal) throw new Error("PayPal SDK not available after load");
+        if (!paypal?.Buttons) {
+          throw new Error("PayPal SDK not properly initialized");
+        }
 
-        paypal.Buttons({
+        // Clear existing buttons
+        const container = document.getElementById("paypal-button-container");
+        if (!container) {
+          throw new Error("PayPal button container not found");
+        }
+        container.innerHTML = "";
+
+        const buttons = paypal.Buttons({
+          style: {
+            layout: 'vertical',
+            color: 'gold',
+            shape: 'rect',
+            label: 'paypal'
+          },
           createOrder: (data: any, actions: any) => {
             return actions.order.create({
               purchase_units: [
                 {
-                  amount: { value: totalPHP.toFixed(2) },
+                  amount: {
+                    currency_code: "PHP",
+                    value: totalPHP.toFixed(2),
+                    breakdown: {
+                      item_total: { currency_code: "PHP", value: subtotal.toFixed(2) },
+                      tax_total: { currency_code: "PHP", value: vatAmount.toFixed(2) },
+                      shipping: { currency_code: "PHP", value: shippingFee.toFixed(2) }
+                    }
+                  },
+                  items: cart.map((item: { name: string; quantity: number; price: number }) => ({
+                    name: item.name,
+                    quantity: item.quantity.toString(),
+                    unit_amount: { currency_code: "PHP", value: item.price.toFixed(2) }
+                  }))
                 },
               ],
             });
@@ -152,7 +228,8 @@ const Checkout: React.FC = () => {
     };
 
     let mounted = true;
-    ensurePayPal()
+    initializePayPal()
+      .then(() => ensurePayPal())
       .then(() => {
         if (mounted) renderButtons();
       })
@@ -162,11 +239,19 @@ const Checkout: React.FC = () => {
         setShowToast(true);
       });
 
-    // cleanup: remove container children on unmount so re-render works
+    // cleanup: remove PayPal script and container children on unmount
     return () => {
       mounted = false;
+      // Clear PayPal container
       const container = document.getElementById("paypal-button-container");
       if (container) container.innerHTML = "";
+      
+      // Remove PayPal script
+      const script = document.getElementById("paypal-sdk");
+      if (script) script.remove();
+      
+      // Clear PayPal object
+      (window as any).paypal = undefined;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, cart]);
@@ -174,8 +259,17 @@ const Checkout: React.FC = () => {
   if (cart.length === 0) {
     return (
       <IonPage>
-        <IonContent className="ion-padding">
-          <h2>Your cart is empty</h2>
+        <TopBar />
+        <IonContent className="checkout-content">
+          <div className="empty-cart text-center">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/3081/3081559.png"
+              alt="Empty Cart"
+              className="empty-cart-img"
+            />
+            <h2>Your cart is empty</h2>
+            <p>Start adding some refreshing drinks!</p>
+          </div>
         </IonContent>
       </IonPage>
     );
@@ -183,50 +277,70 @@ const Checkout: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Checkout</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <TopBar />
 
-      <IonContent className="ion-padding">
-        <h3>Order Summary</h3>
-        <IonList>
-          {cart.map((item: any) => (
-            <IonItem key={item.id}>
-              <IonLabel>
-                <strong>{item.name}</strong>
-                <p>
-                  {item.quantity} × ₱{item.price.toFixed(2)} = ₱{(item.quantity * item.price).toFixed(2)}
-                </p>
-              </IonLabel>
-            </IonItem>
-          ))}
-        </IonList>
+      <IonContent className="checkout-content">
+        <section className="checkout-section">
+          <IonList lines="none">
+            {cart.map((item: any) => (
+              <IonItem key={item.id} className="cart-item">
+                <IonImg src={item.image} alt={item.name} className="cart-image" />
+                <IonLabel>
+                  <div className="item-header">
+                    <h2 className="item-name">{item.name}</h2>
+                  </div>
+                  <p className="item-details">₱{item.price.toFixed(2)}</p>
+                  <p className="item-quantity">Quantity: {item.quantity}</p>
+                  <p className="item-subtotal">
+                    Subtotal: ₱{(item.quantity * item.price).toFixed(2)}
+                  </p>
+                </IonLabel>
+              </IonItem>
+            ))}
+          </IonList>
+        </section>
 
-        <div style={{ marginTop: 12 }}>
-          <div>Subtotal: ₱{subtotal.toFixed(2)}</div>
-          <div>VAT (12%): ₱{vatAmount.toFixed(2)}</div>
-          <div>Shipping: ₱{shippingFee.toFixed(2)}</div>
-          <h2>Total: ₱{total.toFixed(2)}</h2>
-        </div>
+        {/* Order Summary Section */}
+        <section className="order-summary">
+          <IonText color="dark">
+            <h3 className="summary-title">Order Summary</h3>
+          </IonText>
 
-        <div style={{ marginTop: 24 }}>
-          <div id="paypal-button-container" />
-          {processing && (
-            <div style={{ marginTop: 12 }}>
-              <IonSpinner /> Processing payment...
-            </div>
-          )}
-        </div>
+          <div className="summary-row">
+            <span>Subtotal</span>
+            <span>₱{subtotal.toFixed(2)}</span>
+          </div>
+          <div className="summary-row">
+            <span>VAT (12%)</span>
+            <span>₱{vatAmount.toFixed(2)}</span>
+          </div>
+          <div className="summary-row">
+            <span>Shipping Fee</span>
+            <span>₱{shippingFee.toFixed(2)}</span>
+          </div>
+          <hr />
+          <div className="summary-row total">
+            <strong>Total</strong>
+            <strong>₱{total.toFixed(2)}</strong>
+          </div>
+        </section>
 
-        <IonToast
-          isOpen={showToast}
-          onDidDismiss={() => setShowToast(false)}
-          message={toastMessage}
-          duration={3000}
-        />
+        {/* PayPal Button Container */}
+        <div id="paypal-button-container" />
+        {processing && (
+          <div className="processing-overlay">
+            <IonSpinner /> Processing payment...
+          </div>
+        )}
       </IonContent>
+
+      <IonToast
+        isOpen={showToast}
+        onDidDismiss={() => setShowToast(false)}
+        message={toastMessage}
+        duration={3000}
+        color={toastMessage.includes("Error") ? "danger" : "success"}
+      />
     </IonPage>
   );
 };

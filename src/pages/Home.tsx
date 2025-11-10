@@ -44,16 +44,19 @@ const Home: React.FC = () => {
   useEffect(() => {
     const unsub = listenToProducts((products, changes) => {
       setProducts(products);
-      if (changes.length > 0) {
+      // Don't show toasts for initial load
+      if (changes.length > 0 && products.length > 0) {
+        // Skip notifications on page load/initial data fetch
         const last = changes[changes.length - 1];
-        const lastProduct = last.doc as Product;
-        setToastMessage(() => {
-          if (last.type === "added") return `${lastProduct.name} added`;
-          if (last.type === "modified") return `${lastProduct.name} updated`;
-          if (last.type === "removed") return `${lastProduct.name} removed`;
-          return "Catalog updated";
-        });
-        setShowToast(true);
+        if (last.type !== "added") { // Only show for modifications and removals
+          const lastProduct = last.doc as Product;
+          setToastMessage(() => {
+            if (last.type === "modified") return `${lastProduct.name} updated`;
+            if (last.type === "removed") return `${lastProduct.name} removed`;
+            return "Catalog updated";
+          });
+          setShowToast(true);
+        }
       }
     });
 

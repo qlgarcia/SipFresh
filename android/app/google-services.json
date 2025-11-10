@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "820872372501",
+    "project_id": "sipfresh-fdb8d",
+    "storage_bucket": "sipfresh-fdb8d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:820872372501:android:54bc0d9f4c3b10e0c8491c",
+        "android_client_info": {
+          "package_name": "io.ionic.sipfresh"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "820872372501-9rptlj1qg5ajloepk1gqe5gj46pd1nag.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.ionic.sipfresh",
+            "certificate_hash": "67e738102849b1cb9f16aa85a998abcf3ae3e5cc"
+          }
+        },
+        {
+          "client_id": "820872372501-as58mc0l42ucg6mc306jbdkf5t60lvc4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdkUaKFyMyp28v2igAvNNiQJbkuQkIB6Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "820872372501-as58mc0l42ucg6mc306jbdkf5t60lvc4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

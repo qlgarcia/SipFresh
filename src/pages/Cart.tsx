@@ -34,7 +34,6 @@ const Cart: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
   const { isAdmin } = useAuth();
 
   useEffect(() => {
@@ -174,18 +173,10 @@ const Cart: React.FC = () => {
             color="success"
             className="checkout-btn"
             onClick={handleCheckout}
-            disabled={isProcessing}
           >
-            {isProcessing ? (
-              <>
-                <IonSpinner />
-                {" Processing..."}
-              </>
-            ) : (
-              "Proceed to Checkout"
-            )}
+            Proceed to Checkout
           </IonButton>
-          <IonButton expand="block" color="medium" fill="clear" onClick={clearCart} disabled={isProcessing}>
+          <IonButton expand="block" color="medium" fill="clear" onClick={clearCart}>
             Clear Cart
           </IonButton>
         </IonFooter>

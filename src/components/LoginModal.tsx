@@ -12,9 +12,11 @@ import {
   IonLabel,
 } from "@ionic/react";
 import { logoGoogle, logoFacebook, closeOutline, mailOutline } from "ionicons/icons";
-import { signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, googleProvider, db } from "../firebaseConfig";
+import { signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithCredential } from "firebase/auth";
+import { auth, db } from "../firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import "./LoginModal.css";
 
 interface LoginModalProps {
@@ -28,8 +30,36 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
   const handleGoogleLogin = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
+      let authResult;
+      
+      if (Capacitor.isNativePlatform()) {
+        // Initialize Google Auth
+        await GoogleAuth.initialize();
+        
+        // Sign in with native flow
+        const googleUser = await GoogleAuth.signIn();
+        
+        // Get the ID token
+        if (!googleUser || !googleUser.authentication || !googleUser.authentication.idToken) {
+          throw new Error('No ID token received from Google Sign-In');
+        }
+        
+        // Create Firebase credential
+        const credential = GoogleAuthProvider.credential(
+          googleUser.authentication.idToken
+        );
+        
+        // Sign in to Firebase with credential
+        authResult = await signInWithCredential(auth, credential);
+      } else {
+        // Web flow
+        const provider = new GoogleAuthProvider();
+        provider.addScope('profile');
+        provider.addScope('email');
+        authResult = await signInWithPopup(auth, provider);
+      }
+
+      const user = authResult.user;
 
       await setDoc(
         doc(db, "users", user.uid),
@@ -48,12 +78,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       onClose();
     } catch (error) {
       console.error("Google login error:", error);
-      // Provide a helpful, actionable message for the common 'unauthorized-domain' error.
       const code = (error as any)?.code || (error as any)?.message || "";
       if (typeof code === "string" && code.includes("unauthorized-domain")) {
         alert(
           "Google sign-in blocked: the current domain is not authorized in your Firebase project.\n\n" +
-            "Fix: Open Firebase Console → Authentication → Settings → Authorized domains and add this domain (e.g. sipfresh.vercel.app and localhost:5173)."
+            "Fix: Open Firebase Console → Authentication → Settings → Authorized domains and add this domain."
         );
       } else {
         alert("Google login error: " + ((error as any)?.message || error));
@@ -133,14 +162,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           Continue with Google
         </IonButton>
 
-        <IonButton
-          expand="block"
-          className="login-btn facebook-btn"
-          onClick={() => alert("Facebook login coming soon!")}
-        >
-          <IonIcon slot="start" icon={logoFacebook} />
-          Continue with Facebook
-        </IonButton>
       </IonContent>
     </IonModal>
   );

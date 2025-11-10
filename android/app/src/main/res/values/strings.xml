@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SipFresh</string>
+    <string name="title_activity_main">SipFresh</string>
+    <string name="package_name">io.ionic.sipfresh</string>
+    <string name="custom_url_scheme">io.ionic.sipfresh</string>
+    <string name="server_client_id">820872372501-as58mc0l42ucg6mc306jbdkf5t60lvc4.apps.googleusercontent.com</string>
+</resources>

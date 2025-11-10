@@ -35,6 +35,7 @@ export interface Order {
   // store both 'totalAmount' (existing code) and 'amount' (requested schema)
   totalAmount: number;
   amount?: number;
+  paymentId?: string; // PayPal payment transaction ID
   status: OrderStatus;
   createdAt?: Date;
   updatedAt?: Date;
