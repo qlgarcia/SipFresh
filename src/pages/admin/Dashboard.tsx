@@ -15,6 +15,8 @@ import {
   IonSpinner,
   IonButton,
   IonToast,
+  IonButtons,
+  IonBackButton,
 } from "@ionic/react";
 import { getUsers } from "../../services/userService";
 import { getOrders, getOrdersByStatus } from "../../services/orderService";
@@ -105,6 +107,9 @@ const Dashboard: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar color="primary">
+          <IonButtons slot="start">
+            <IonBackButton defaultHref="/home" />
+          </IonButtons>
           <IonTitle>Admin Dashboard</IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -169,4 +174,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-

@@ -35,6 +35,7 @@ import { useAuth } from "../hooks/useAuth";
 import { listenToCategories, Category } from "../services/categoryService";
 import LoginModal from "./LoginModal";
 import "./SideMenu.css";
+import logo from "/src/assets/SipFreshClear.png";
 
 interface SideMenuProps {
   selected: string;
@@ -133,7 +134,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ selected, onSelect }) => {
           <IonToolbar className="menu-toolbar">
             <IonTitle className="menu-title">
               <img
-                src="/src/assets/SipFreshClear.png"
+                src={logo}
                 alt="Logo"
                 className="menu-logo"
               />
