@@ -192,7 +192,7 @@ const Home: React.FC = () => {
                 const quantityInCart = getQuantityInCart(productId);
                 return (
                   <IonCol size="6" key={productId}>
-                    <IonCard className="product-card">
+                    <IonCard className="product-card ion-text-center">
                       <img
                         src={(juice as any).imageURL || (juice as any).image || ""}
                         alt={(juice as any).name}

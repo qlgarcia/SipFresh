@@ -102,6 +102,16 @@
   object-fit: cover;
 }
 
+/* Centered product image styling */
+.product-card .product-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
+
 .product-card ion-card-title {
   color: #007bff;
   font-size: 1rem;
