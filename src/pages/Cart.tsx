@@ -87,8 +87,19 @@ const Cart: React.FC = () => {
             {/* 🧾 Cart Items */}
             <section className="cart-section">
               <IonList lines="none">
-                {cart.map((item, index) => (
-                  <IonItem key={`${item.id}-${index}`} className="cart-item">
+                {cart.map((item, index) => {
+                  const remainingStock =
+                    typeof item.stock === "number"
+                      ? Math.max(
+                          item.stock -
+                            cart
+                              .filter((cartItem) => cartItem.productId === item.productId)
+                              .reduce((sum, cartItem) => sum + cartItem.quantity, 0),
+                          0
+                        )
+                      : undefined;
+                  return (
+                    <IonItem key={`${item.id}-${index}`} className="cart-item">
                     <IonImg src={item.image} alt={item.name} className="cart-image" />
                     <IonLabel>
                       <div className="item-header">
@@ -122,7 +133,19 @@ const Cart: React.FC = () => {
                           fill="outline"
                           size="small"
                           className="qty-btn"
-                          onClick={() => increaseQuantity(item.id)}
+                          disabled={
+                            typeof item.stock === "number" &&
+                            cart
+                              .filter((cartItem) => cartItem.productId === item.productId)
+                              .reduce((sum, cartItem) => sum + cartItem.quantity, 0) >= item.stock
+                          }
+                          onClick={() => {
+                            const success = increaseQuantity(item.id);
+                            if (!success) {
+                              setToastMessage("Error: Cannot add more. Stock limit reached.");
+                              setShowToast(true);
+                            }
+                          }}
                         >
                           <IonIcon icon={addOutline} />
                         </IonButton>
@@ -132,9 +155,15 @@ const Cart: React.FC = () => {
                       <p className="item-subtotal">
                         Subtotal: ₱{(item.price * item.quantity).toFixed(2)}
                       </p>
+                      {typeof item.stock === "number" && (
+                        <p className="item-stock">
+                          Available stock: {remainingStock ?? 0}
+                        </p>
+                      )}
                     </IonLabel>
-                  </IonItem>
-                ))}
+                    </IonItem>
+                  );
+                })}
               </IonList>
             </section>
 

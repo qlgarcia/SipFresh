@@ -29,7 +29,7 @@ const Home: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const history = useHistory();
-  const { addToCart } = useCart(); // ✅ useCart hook to manage cart state
+  const { cart, addToCart } = useCart(); // ✅ useCart hook to manage cart state
   const [products, setProducts] = useState<Product[]>([]);
   const [errorToast, setErrorToast] = useState({ open: false, msg: "" });
 
@@ -43,7 +43,16 @@ const Home: React.FC = () => {
   // Real-time products
   useEffect(() => {
     const unsub = listenToProducts((products, changes) => {
-      setProducts(products);
+      const normalized = products.map((product: any) => ({
+        ...product,
+        stock:
+          typeof product.stock === "number"
+            ? product.stock
+            : typeof product.stock === "string"
+            ? Number(product.stock)
+            : undefined,
+      }));
+      setProducts(normalized);
       // Don't show toasts for initial load
       if (changes.length > 0 && products.length > 0) {
         // Skip notifications on page load/initial data fetch
@@ -72,19 +81,39 @@ const Home: React.FC = () => {
   };
 
   // ✅ Updated Add to Cart behavior
+  const getQuantityInCart = (productId?: string) => {
+    if (!productId) return 0;
+    return cart.reduce((sum, item) => (item.productId === productId ? sum + item.quantity : sum), 0);
+  };
+
   const handleAddToCart = (juice: any) => {
     if (!user) {
       setShowLogin(true);
       return;
     }
 
-    addToCart({
-      id: juice.id || `${juice.name}-${juice.price}`,
+    const productId = juice.id || `${juice.name}-${juice.price}`;
+    const stockValue =
+      typeof juice.stock === "number"
+        ? juice.stock
+        : typeof juice.stock === "string"
+        ? Number(juice.stock)
+        : undefined;
+
+    const success = addToCart({
+      id: productId,
+      productId,
       name: juice.name,
       price: Number(juice.price) || 0,
       image: juice.image || juice.imageURL || "",
       quantity: 1,
+      stock: stockValue,
     });
+
+    if (!success) {
+      setErrorToast({ open: true, msg: "Sorry, this product is out of stock." });
+      return;
+    }
 
     setToastMessage(`${juice.name} added to cart 🛒`);
     setShowToast(true);
@@ -158,32 +187,52 @@ const Home: React.FC = () => {
                 <p style={{ textAlign: "center" }}>No products to display</p>
               </IonCol>
             ) : (
-              products.slice(0, 6).map((juice) => (
-                <IonCol size="6" key={juice.id}>
-                  <IonCard className="product-card">
-                    <img
-                      src={(juice as any).imageURL || (juice as any).image || ""}
-                      alt={(juice as any).name}
-                      className="product-image"
-                    />
-                    <IonCardHeader>
-                      <IonCardTitle>{(juice as any).name}</IonCardTitle>
-                    </IonCardHeader>
-                    <IonCardContent>
-                      <p className="price-text">₱{Number((juice as any).price || 0).toFixed(2)}</p>
-                      <IonButton
-                        fill="solid"
-                        color="success"
-                        size="small"
-                        onClick={() => handleAddToCart(juice)}
-                      >
-                        <IonIcon icon={cartOutline} slot="start" />
-                        Add to Cart
-                      </IonButton>
-                    </IonCardContent>
-                  </IonCard>
-                </IonCol>
-              ))
+              products.slice(0, 6).map((juice) => {
+                const productId = juice.id || `${juice.name}-${juice.price}`;
+                const quantityInCart = getQuantityInCart(productId);
+                return (
+                  <IonCol size="6" key={productId}>
+                    <IonCard className="product-card">
+                      <img
+                        src={(juice as any).imageURL || (juice as any).image || ""}
+                        alt={(juice as any).name}
+                        className="product-image"
+                      />
+                      <IonCardHeader>
+                        <IonCardTitle>{(juice as any).name}</IonCardTitle>
+                      </IonCardHeader>
+                      <IonCardContent>
+                        <p className="price-text">₱{Number((juice as any).price || 0).toFixed(2)}</p>
+                        <div
+                          className={`stock-indicator ${
+                            typeof juice.stock === "number" && juice.stock > 0 ? "in-stock" : "out-of-stock"
+                          }`}
+                        >
+                          {typeof juice.stock === "number"
+                            ? juice.stock > 0
+                              ? `In stock: ${Math.max(juice.stock - quantityInCart, 0)}`
+                              : "Out of stock"
+                            : "Stock unavailable"}
+                        </div>
+                        <IonButton
+                          fill="solid"
+                          color="success"
+                          size="small"
+                          disabled={
+                            typeof juice.stock === "number" &&
+                            quantityInCart >= juice.stock
+                          }
+                          className="add-to-cart-btn"
+                          onClick={() => handleAddToCart(juice)}
+                        >
+                          <IonIcon icon={cartOutline} slot="start" />
+                          Add to Cart
+                        </IonButton>
+                      </IonCardContent>
+                    </IonCard>
+                  </IonCol>
+                );
+              })
             )}
           </IonRow>
         </IonGrid>
@@ -199,6 +248,13 @@ const Home: React.FC = () => {
         message={toastMessage}
         duration={1500}
         color="success"
+      />
+      <IonToast
+        isOpen={errorToast.open}
+        onDidDismiss={() => setErrorToast({ open: false, msg: "" })}
+        message={errorToast.msg}
+        duration={2000}
+        color="danger"
       />
     </IonPage>
   );

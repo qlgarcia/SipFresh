@@ -12,6 +12,7 @@ import {
   onSnapshot,
   Unsubscribe,
   DocumentData,
+  runTransaction,
 } from "firebase/firestore";
 
 export interface Product {
@@ -157,5 +158,51 @@ export const deleteProduct = async (id: string): Promise<void> => {
     console.error("Error deleting product:", error);
     throw error;
   }
+};
+
+/**
+ * Atomically decrease stock for multiple products.
+ * Throws if any product is missing or would go negative.
+ */
+export const decreaseProductStockBatch = async (
+  items: { productId: string; quantity: number }[]
+): Promise<void> => {
+  if (!items.length) return;
+
+  const aggregated = items.reduce<Record<string, number>>((acc, { productId, quantity }) => {
+    if (!productId) {
+      return acc;
+    }
+    acc[productId] = (acc[productId] || 0) + quantity;
+    return acc;
+  }, {});
+
+  await runTransaction(db, async (transaction) => {
+    for (const [productId, quantity] of Object.entries(aggregated)) {
+      const productRef = doc(db, "products", productId);
+      const snapshot = await transaction.get(productRef);
+
+      if (!snapshot.exists()) {
+        console.warn(`Product ${productId} not found while decreasing stock.`);
+        continue;
+      }
+
+      const data = snapshot.data() as Product;
+      const currentStock = typeof data.stock === "number" ? data.stock : 0;
+
+      if (quantity <= 0) {
+        continue;
+      }
+
+      if (currentStock < quantity) {
+        throw new Error(`Not enough stock for ${data.name ?? productId}.`);
+      }
+
+      transaction.update(productRef, {
+        stock: currentStock - quantity,
+        updatedAt: new Date(),
+      });
+    }
+  });
 };
 

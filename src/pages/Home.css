@@ -147,3 +147,24 @@
   font-size: 0.9rem;
   letter-spacing: 0.3px;
 }
+
+.stock-indicator {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.stock-indicator.in-stock {
+  color: #1b8a3d;
+}
+
+.stock-indicator.out-of-stock {
+  color: #c0392b;
+}
+
+ion-button.add-to-cart-btn[disabled],
+ion-button.add-to-cart-btn[disabled]::part(native) {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}

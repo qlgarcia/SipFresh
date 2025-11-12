@@ -113,8 +113,6 @@ const Orders: React.FC = () => {
         return "success";
       case "declined":
         return "danger";
-      case "completed":
-        return "primary";
       default:
         return "warning";
     }
@@ -156,9 +154,6 @@ const Orders: React.FC = () => {
           </IonSegmentButton>
           <IonSegmentButton value="declined">
             <IonLabel>Declined</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="completed">
-            <IonLabel>Completed</IonLabel>
           </IonSegmentButton>
         </IonSegment>
 

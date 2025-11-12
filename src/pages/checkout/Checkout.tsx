@@ -17,6 +17,7 @@ import {
 } from "@ionic/react";
 import { useCart } from "../../context/CartContext";
 import { createOrder } from "../../services/orderService";
+import { decreaseProductStockBatch } from "../../services/productService";
 import { useAuth } from "../../hooks/useAuth";
 import TopBar from "../../components/TopBar";
 import "./Checkout.css";
@@ -221,11 +222,18 @@ const Checkout: React.FC = () => {
 
               // Map cart items to order items matching schema
               const orderItems = cart.map((it: any) => ({
-                productId: it.id,
+                productId: it.productId || it.id,
                 name: it.name,
                 price: it.price,
                 quantity: it.quantity,
               }));
+
+              const stockPayload = cart
+                .filter((it: any) => it.productId || it.id)
+                .map((it: any) => ({
+                  productId: it.productId || it.id,
+                  quantity: it.quantity,
+                }));
 
               const orderId = await createOrder({
                 userId: user!.uid,
@@ -237,6 +245,14 @@ const Checkout: React.FC = () => {
                 // attach payment information
                 paymentId: details.id,
               } as any);
+
+              try {
+                await decreaseProductStockBatch(stockPayload);
+              } catch (stockError) {
+                console.error("Failed to decrease stock after checkout:", stockError);
+                setToastMessage("Order saved but stock update failed. Please contact support.");
+                setShowToast(true);
+              }
 
               // clear cart locally
               clearCart();

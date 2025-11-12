@@ -37,7 +37,9 @@ const ProductDetailsPage: React.FC = () => {
   const [product, setProduct] = useState<any>(null);
   const [size, setSize] = useState<string>("Small");
   const [showToast, setShowToast] = useState(false);
-  const { addToCart } = useCart();
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastColor, setToastColor] = useState<"success" | "danger">("success");
+  const { cart, addToCart } = useCart();
 
   useEffect(() => {
     let mounted = true;
@@ -55,20 +57,52 @@ const ProductDetailsPage: React.FC = () => {
     };
   }, [id]);
 
+  const getQuantityInCart = (productId?: string) => {
+    if (!productId) return 0;
+    return cart.reduce((sum, item) => (item.productId === productId ? sum + item.quantity : sum), 0);
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
     const basePrice = typeof product.price === "string" ? parseFloat(product.price.replace("₱", "")) : Number(product.price || 0);
     const addOn = size === "Medium" ? 10 : size === "Large" ? 20 : 0;
     const price = basePrice + addOn;
+    const productId = product.id || product.name;
+    const stockValue =
+      typeof product.stock === "number"
+        ? product.stock
+        : typeof product.stock === "string"
+        ? Number(product.stock)
+        : undefined;
+    const quantityInCart = getQuantityInCart(product.id);
 
-    addToCart({
-      id: `${product.id}-${size}`,
+    if (typeof stockValue === "number" && quantityInCart >= stockValue) {
+      setToastColor("danger");
+      setToastMessage("Sorry, this product is out of stock.");
+      setShowToast(true);
+      return;
+    }
+
+    const success = addToCart({
+      id: `${productId}-${size}`,
+      productId,
       name: `${product.name} (${size})`,
       price,
       image: product.image || product.imageURL || "",
       quantity: 1,
+      size,
+      stock: stockValue,
     });
 
+    if (!success) {
+      setToastColor("danger");
+      setToastMessage("Sorry, this product is out of stock.");
+      setShowToast(true);
+      return;
+    }
+
+    setToastColor("success");
+    setToastMessage(`🛒 Added ${product.name} (${size}) to cart`);
     setShowToast(true);
   };
 
@@ -118,6 +152,18 @@ const ProductDetailsPage: React.FC = () => {
             <p><strong>Category:</strong> {product.category || "—"}</p>
             {product.description && <p>{product.description}</p>}
             <p style={{ fontSize: 18, fontWeight: 700 }}>₱{basePrice}</p>
+            <div
+              className={`stock-indicator ${
+                typeof product.stock === "number" && product.stock > 0 ? "in-stock" : "out-of-stock"
+              }`}
+              style={{ marginTop: 8 }}
+            >
+              {typeof product.stock === "number"
+                ? product.stock > 0
+                  ? `In stock: ${Math.max(product.stock - getQuantityInCart(product.id), 0)}`
+                  : "Out of stock"
+                : "Stock unavailable"}
+            </div>
 
             <div style={{ marginTop: 12 }}>
               <IonSelect value={size} okText="Select" onIonChange={(e) => setSize(e.detail.value)}>
@@ -130,7 +176,16 @@ const ProductDetailsPage: React.FC = () => {
             </div>
 
             <div style={{ marginTop: 16 }}>
-              <IonButton expand="block" color="success" onClick={handleAddToCart}>
+              <IonButton
+                expand="block"
+                color="success"
+                onClick={handleAddToCart}
+                disabled={
+                  typeof product.stock === "number" &&
+                  getQuantityInCart(product.id) >= product.stock
+                }
+                className="add-to-cart-btn"
+              >
                 Add to Cart
               </IonButton>
               <IonButton expand="block" fill="outline" onClick={() => history.goBack()} style={{ marginTop: 8 }}>
@@ -140,7 +195,13 @@ const ProductDetailsPage: React.FC = () => {
           </IonCardContent>
         </IonCard>
 
-        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={`🛒 Added ${product.name} (${size}) to cart`} duration={1500} color="success" />
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={1500}
+          color={toastColor}
+        />
       </IonContent>
     </IonPage>
   );
