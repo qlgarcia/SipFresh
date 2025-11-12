@@ -96,6 +96,27 @@ const Orders: React.FC = () => {
 
   const handleUpdateStatus = async (orderId: string, status: "accepted" | "declined") => {
     try {
+      // If accepting the order, decrease stock first
+      if (status === "accepted") {
+        const order = orders.find((o) => o.id === orderId);
+        if (order && order.items && order.items.length > 0) {
+          const stockPayload = order.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          }));
+          
+          try {
+            await decreaseProductStockBatch(stockPayload);
+          } catch (stockError) {
+            console.error("Error decreasing stock:", stockError);
+            setToastMessage("Failed to decrease stock. Order status not updated.");
+            setShowToast(true);
+            return;
+          }
+        }
+      }
+
+      // Update order status after stock is successfully decreased
       await updateOrderStatus(orderId, status);
       setToastMessage(`Order ${status === "accepted" ? "accepted" : "declined"} successfully`);
       setShowToast(true);
