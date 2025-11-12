@@ -15,6 +15,7 @@ const CartPage = React.lazy(() => import("./pages/Cart"));
 const Checkout = React.lazy(() => import("./pages/checkout/Checkout"));
 const CheckoutSuccess = React.lazy(() => import("./pages/CheckoutSuccess"));
 const Splash = React.lazy(() => import("./pages/Splash"));
+const ProductDetailsPage = React.lazy(() => import("./pages/ProductDetailsPage"));
 const SideMenu = React.lazy(() => import("./components/SideMenu"));
 const About = React.lazy(() => import("./pages/About"));
 const ProfilePage = React.lazy(() => import("./pages/ProfilePage"));
@@ -67,6 +68,7 @@ const App: React.FC = () => {
                 <Switch>
                   <Route path="/admin" component={AdminLayout} />
                   <Route exact path="/home" component={Home} />
+                  <Route exact path="/product/:id" component={ProductDetailsPage} />
                   <Route exact path="/products" component={Products} />
                   <Route exact path="/cart" component={CartPage} />
                   <Route exact path="/checkout" component={Checkout} />

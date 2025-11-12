@@ -25,7 +25,7 @@ import { listenToProducts } from "../services/productService";
 import LoginModal from "../components/LoginModal";
 import TopBar from "../components/TopBar";
 import "./Products.css";
-import { useLocation } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 
 // We'll use realtime products from Firestore
 interface RemoteProduct {
@@ -56,6 +56,7 @@ const Products: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState("Small");
   const { addToCart } = useCart();
   const location = useLocation();
+  const history = useHistory();
   const categoryFilter = new URLSearchParams(location.search).get("category") || "";
 
   useEffect(() => {
@@ -173,6 +174,7 @@ const Products: React.FC = () => {
                         color="medium"
                         fill="outline"
                         className="compact-btn"
+                        onClick={() => product.id && history.push(`/product/${product.id}`)}
                       >
                         <IonIcon
                           slot="icon-only"

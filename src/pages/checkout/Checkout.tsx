@@ -185,7 +185,6 @@ const Checkout: React.FC = () => {
           throw new Error("PayPal button container not found");
         }
         container.innerHTML = "";
-
         const buttons = paypal.Buttons({
           style: {
             layout: 'vertical',

@@ -46,6 +46,11 @@ const cleanFirestoreData = (value: any): any => {
   if (value === undefined) return undefined;
   if (value === null) return null;
   if (value instanceof Date) return value; // keep Date objects
+  // Check if this is a Firestore serverTimestamp() sentinel object
+  // These have a special _methodName property that should not be modified
+  if (typeof value === "object" && value._methodName === "serverTimestamp") {
+    return value; // Pass through unchanged
+  }
   if (Array.isArray(value)) {
     // Clean each element and remove undefined entries
     return value

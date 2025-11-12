@@ -299,20 +299,43 @@ const ProfilePage: React.FC = () => {
               </IonButton>
             </div>
 
-            {/* Order history (real-time) */}
+            {/* Order history (real-time) - sorted newest first */}
             <div style={{ marginTop: 24 }}>
               <h3>Your Orders</h3>
               {orders.length === 0 ? (
                 <p>No orders yet.</p>
               ) : (
-                orders.map((o) => (
-                  <div key={o.id} style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                    <strong>Order #{o.id?.substring(0, 8)}</strong>
-                    <div>Status: {o.status}</div>
-                    <div>Items: {o.items.length}</div>
-                    <div>Total: ₱{(o.totalAmount || 0).toFixed(2)}</div>
-                  </div>
-                ))
+                [...orders]
+                  .sort((a, b) => {
+                    const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+                    const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+                    return dateB - dateA; // newest first
+                  })
+                  .map((o) => (
+                    <div key={o.id} style={{ padding: 12, borderBottom: "1px solid #eee", borderRadius: 4, marginBottom: 8, backgroundColor: "#fafafa" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <strong>Order #{o.id?.substring(0, 8)}</strong>
+                        <span style={{ fontSize: 12, color: "#999" }}>
+                          {o.createdAt
+                            ? new Date(o.createdAt).toLocaleDateString() +
+                              " " +
+                              new Date(o.createdAt).toLocaleTimeString()
+                            : "N/A"}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: 16, fontSize: 14 }}>
+                        <div>
+                          <strong style={{ color: "var(--ion-color-primary)" }}>Status:</strong> {o.status.toUpperCase()}
+                        </div>
+                        <div>
+                          <strong>Items:</strong> {o.items.length}
+                        </div>
+                        <div>
+                          <strong>Total:</strong> ₱{(o.totalAmount || 0).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
               )}
             </div>
           </div>

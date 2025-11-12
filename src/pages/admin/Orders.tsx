@@ -16,14 +16,19 @@ import {
   IonSegment,
   IonSegmentButton,
   IonToast,
+  IonThumbnail,
+  IonImg,
 } from "@ionic/react";
 import { updateOrderStatus, getOrders, listenToOrders, Order, OrderStatus } from "../../services/orderService";
 import "./Orders.css";
+
+type SortOption = "newest" | "oldest" | "amount-high" | "amount-low";
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [loading, setLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -44,13 +49,37 @@ const Orders: React.FC = () => {
     return () => unsub();
   }, []);
 
-  useEffect(() => {
-    if (statusFilter === "all") {
-      setFilteredOrders(orders);
-    } else {
-      setFilteredOrders(orders.filter((order) => order.status === statusFilter));
+  const sortOrders = (ordersToSort: Order[]): Order[] => {
+    const sorted = [...ordersToSort];
+    switch (sortBy) {
+      case "newest":
+        return sorted.sort((a, b) => {
+          const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+          const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+          return dateB - dateA;
+        });
+      case "oldest":
+        return sorted.sort((a, b) => {
+          const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+          const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+          return dateA - dateB;
+        });
+      case "amount-high":
+        return sorted.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+      case "amount-low":
+        return sorted.sort((a, b) => (a.totalAmount || 0) - (b.totalAmount || 0));
+      default:
+        return sorted;
     }
-  }, [statusFilter, orders]);
+  };
+
+  useEffect(() => {
+    let filtered = orders;
+    if (statusFilter !== "all") {
+      filtered = orders.filter((order) => order.status === statusFilter);
+    }
+    setFilteredOrders(sortOrders(filtered));
+  }, [statusFilter, orders, sortBy]);
 
   const loadOrders = async () => {
     try {
@@ -111,6 +140,7 @@ const Orders: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent>
+        {/* Status Filter */}
         <IonSegment
           value={statusFilter}
           onIonChange={(e) => setStatusFilter(e.detail.value as OrderStatus | "all")}
@@ -131,6 +161,27 @@ const Orders: React.FC = () => {
             <IonLabel>Completed</IonLabel>
           </IonSegmentButton>
         </IonSegment>
+
+        {/* Sort Dropdown */}
+        <div style={{ padding: "12px 16px", backgroundColor: "#f9f9f9", borderBottom: "1px solid #eee" }}>
+          <label style={{ fontSize: 14, fontWeight: 500, display: "block", marginBottom: 8 }}>Sort by:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              border: "1px solid var(--ion-color-medium)",
+              fontSize: 14,
+            }}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="amount-high">Highest Amount</option>
+            <option value="amount-low">Lowest Amount</option>
+          </select>
+        </div>
 
         {filteredOrders.length === 0 ? (
           <IonCard>
@@ -153,13 +204,27 @@ const Orders: React.FC = () => {
                     </p>
                     <details style={{ marginTop: "8px" }}>
                       <summary style={{ cursor: "pointer", color: "var(--ion-color-primary)" }}>
-                        View Items
+                        View Items ({order.items.length})
                       </summary>
-                      <ul style={{ marginTop: "8px", paddingLeft: "20px" }}>
+                      <ul style={{ marginTop: "8px", paddingLeft: "0" }}>
                         {order.items.map((item, idx) => (
-                          <li key={idx}>
-                            {item.productName} - Qty: {item.quantity} × ₱{item.price.toFixed(2)} = ₱
-                            {(item.quantity * item.price).toFixed(2)}
+                          <li key={idx} style={{ listStyle: "none", marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid #eee" }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                              {item.productId && (
+                                <IonThumbnail style={{ minWidth: 60, height: 60 }}>
+                                  <img
+                                    src={`https://via.placeholder.com/60x60?text=${encodeURIComponent(item.productId.substring(0, 8))}`}
+                                    alt={item.productName || item.name || "Product"}
+                                    style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 4 }}
+                                  />
+                                </IonThumbnail>
+                              )}
+                              <div style={{ flex: 1 }}>
+                                <div><strong>{item.productName || item.name || "Unknown"}</strong></div>
+                                <div style={{ fontSize: 12, color: "#666" }}>ID: {item.productId}</div>
+                                <div>Qty: {item.quantity} × ₱{item.price.toFixed(2)} = ₱{(item.quantity * item.price).toFixed(2)}</div>
+                              </div>
+                            </div>
                           </li>
                         ))}
                       </ul>
