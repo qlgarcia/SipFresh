@@ -39,8 +39,11 @@ service cloud.firestore {
     match /products/{productId} {
       // Anyone can read products
       allow read: if true;
-      // Only admins can write products
+      // Admins can write products
       allow write: if isAdmin();
+      // Authenticated users can update to decrease stock only
+      allow update: if request.auth != null
+                     && request.resource.data.stock < resource.data.stock;
     }
 
     // Orders collection

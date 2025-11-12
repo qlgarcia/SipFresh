@@ -20,6 +20,7 @@ import {
   IonImg,
 } from "@ionic/react";
 import { updateOrderStatus, getOrders, listenToOrders, Order, OrderStatus } from "../../services/orderService";
+import { decreaseProductStockBatch } from "../../services/productService";
 import "./Orders.css";
 
 type SortOption = "newest" | "oldest" | "amount-high" | "amount-low";
