@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useHistory } from "react-router-dom";
 import {
   IonPage,
   IonHeader,
@@ -30,7 +29,6 @@ import TopBar from "../components/TopBar";
 
 const Cart: React.FC = () => {
   const { cart, removeFromCart, clearCart, increaseQuantity, decreaseQuantity } = useCart();
-  const history = useHistory();
   const [user, setUser] = useState<User | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -49,23 +47,6 @@ const Cart: React.FC = () => {
   const vatAmount = subtotal * vatRate;
   const shippingFee = cart.length > 0 ? 45 : 0;
   const total = subtotal + vatAmount + shippingFee;
-
-  const handleCheckout = async () => {
-    if (!user) {
-      setToastMessage("Please login to checkout");
-      setShowToast(true);
-      return;
-    }
-
-    if (cart.length === 0) {
-      setToastMessage("Your cart is empty");
-      setShowToast(true);
-      return;
-    }
-
-    // Navigate to checkout page where PayPal flow will run and the order will be created
-    history.push("/checkout");
-  };
 
   return (
     <IonPage>
@@ -201,7 +182,7 @@ const Cart: React.FC = () => {
             expand="block"
             color="success"
             className="checkout-btn"
-            onClick={handleCheckout}
+            routerLink="/checkout"
           >
             Proceed to Checkout
           </IonButton>

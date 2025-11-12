@@ -19,7 +19,7 @@ const TopBar: React.FC = () => {
 
   return (
     <IonHeader>
-      <IonToolbar className="toolbar-modern">
+      <IonToolbar className="toolbar-modern ion-padding-top">
         <IonButtons slot="start">
           <IonMenuButton />
         </IonButtons>
